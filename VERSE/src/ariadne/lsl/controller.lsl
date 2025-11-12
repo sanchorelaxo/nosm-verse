@@ -941,6 +941,15 @@ state active
 
     }
 
+    touch_start(integer num_detected) {
+        // Click on controller to start node traversal
+        key toucher = llDetectedKey(0);
+        if (toucher == llGetOwner() || toucher == gUserKey) {
+            gUserKey = toucher;
+            option_start(toucher);
+        }
+    }
+
     listen(integer channel, string name, key id, string msg) {
         integer update = FALSE;
         gUserKey = id;
