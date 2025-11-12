@@ -1,5 +1,5 @@
 integer gUseNewParser = TRUE;
-string cTestURL = "http://127.0.0.1:8080/ariadne/api/node";
+string cTestURL = "http://127.0.0.1:8080/ariadne/api/node?";
 
 string cRootNode= "ariadne";
 
