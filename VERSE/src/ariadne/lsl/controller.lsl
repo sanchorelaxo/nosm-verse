@@ -1035,6 +1035,9 @@ state active
     }
 
     http_response(key request_id, integer status, list metadata, string body) {
+        llSay(0, "[CONTROLLER DEBUG] *** HTTP_RESPONSE EVENT TRIGGERED ***");
+        llSay(0, "[CONTROLLER DEBUG] Request ID: " + (string)request_id);
+        llSay(0, "[CONTROLLER DEBUG] Expected ID: " + (string)Rq_getpage);
         llSay(0, "[CONTROLLER DEBUG] HTTP Response received - Status: " + (string)status + ", Body length: " + (string)llStringLength(body));
         if (status != 200) {
             llSay(0, "[CONTROLLER DEBUG] ERROR - HTTP Status " + (string)status);
