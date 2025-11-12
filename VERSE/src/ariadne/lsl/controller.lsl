@@ -1053,11 +1053,13 @@ state active
 
         // first, get sequence
         string seq = xtraktSeq(body, "SLInnerSequence", "value");
+        llSay(0, "[CONTROLLER DEBUG] SLInnerSequence value: " + seq);
         list parts = llParseString2List(seq , [","], []);
         integer n = llGetListLength(parts);
         integer i;
 
         orderedAssets = ["99999"]; // always add OL vpdText
+        llSay(0, "[CONTROLLER DEBUG] Number of assets in sequence: " + (string)n);
 
         for(i = 0; i < n; i++){
             string thisAssetId = llList2String(parts, i);
@@ -1066,12 +1068,12 @@ state active
 
         // run the assets in order
         n = llGetListLength(orderedAssets);
-      //  llSay(0, "number of items to run: "+(string)n);
+        llSay(0, "[CONTROLLER DEBUG] Total assets to process: " + (string)n);
         for(i = 0; i < n; i++){
             string id = llList2String(orderedAssets, i);
-          //   llSay(0, "name to run: "+name);
             string value = getAssetAttribValById(id, "value");
             string type = getAssetAttribValById(id, "type");
+            llSay(0, "[CONTROLLER DEBUG] Processing asset " + (string)i + ": type=" + type + ", value=" + llGetSubString(value, 0, 50));
 
             string dtext = "";
             string device = "";
