@@ -151,10 +151,10 @@ db.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
 db.users.createIndex({ sl_player_key: 1 })
 ```
 
-- [x] All 4 collections created - **COMPLETED** (assetTypes, assetMappings, sessions, cases, nodes, users)
-- [ ] All 31 asset types inserted
+- [x] All 6 collections created - **COMPLETED** (assetTypes, assetMappings, sessions, cases, nodes, users)
+- [x] All 26 asset types inserted - **COMPLETED** (SLChat, SLAnimation, SLObject, VPDText, SLAudio, etc.)
 - [x] Indexes created - **COMPLETED** (mnodeid, expires_at TTL, sl_player_key, case_id, title)
-- [ ] Sample data loaded
+- [x] Sample data loaded - **COMPLETED** (1 test case, 3 nodes, 1 test user)
 
 ---
 
