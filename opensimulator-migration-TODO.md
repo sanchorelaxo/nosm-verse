@@ -1121,6 +1121,471 @@ db.sessions.stats()
 
 ---
 
+## OpenSimulator Local Instance Setup Guide
+
+### Prerequisites
+
+**System Requirements**:
+- Linux (Ubuntu 20.04+ recommended), macOS, or Windows
+- 4GB RAM minimum (8GB recommended)
+- 10GB disk space
+- .NET 8.0 runtime (or Mono 5.12+ for older versions)
+
+**Install Dependencies**:
+
+**Linux (Ubuntu/Debian)**:
+```bash
+# Install .NET 8.0 runtime
+add-apt-repository ppa:dotnet/backports
+apt update
+apt install dotnet-runtime-8.0
+
+# Install libgdiplus (required for graphics)
+wget https://security.ubuntu.com/ubuntu/pool/main/t/tiff/libtiff5_4.3.0-6ubuntu0.12_amd64.deb
+wget https://download.mono-project.com/repo/ubuntu/pool/main/libg/libgdiplus/libgdiplus_6.0.5-0xamarin1+ubuntu2004b1_amd64.deb
+dpkg -i libtiff5_4.3.0-6ubuntu0.12_amd64.deb
+dpkg -i libgdiplus_6.0.5-0xamarin1+ubuntu2004b1_amd64.deb
+apt-mark hold libgdiplus
+```
+
+**macOS**:
+```bash
+# Install Homebrew if not present
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install .NET 8.0
+# Download from https://dotnet.microsoft.com/en-us/download/dotnet/8.0
+
+# Install libgdiplus
+brew install mono-libgdiplus
+```
+
+**Windows**:
+- Download .NET 8.0 Desktop Runtime from https://dotnet.microsoft.com/en-us/download/dotnet/8.0
+- Install VC++ redistributables if needed
+
+---
+
+### Step 1: Download OpenSimulator
+
+```bash
+# Create opensim directory
+mkdir -p ~/opensim && cd ~/opensim
+
+# Download latest stable (0.9.3.0)
+wget http://opensimulator.org/dist/opensim-0.9.3.0.tar.gz
+tar -xzf opensim-0.9.3.0.tar.gz
+cd opensim-0.9.3.0
+```
+
+---
+
+### Step 2: Configure Standalone Mode
+
+```bash
+cd bin
+
+# Copy example configuration files
+cp OpenSim.ini.example OpenSim.ini
+cp config-include/StandaloneCommon.ini.example config-include/StandaloneCommon.ini
+cp config-include/FlotsamCache.ini.example config-include/FlotsamCache.ini
+```
+
+**Edit `OpenSim.ini`**:
+
+```ini
+[Const]
+    ; Set public port to 9000
+    PublicPort = 9000
+
+[Architecture]
+    ; Uncomment Standalone.ini line (remove semicolon)
+    Include-Architecture = "config-include/Standalone.ini"
+
+[Network]
+    ; Set grid name
+    gridname = "Ariadne OpenSim"
+    
+    ; Set external hostname (localhost for local testing)
+    ExternalHostName = localhost
+    
+    ; Port configuration
+    http_listener_port = 9000
+    
+[Hypergrid]
+    ; Enable Hypergrid for cross-grid travel (optional)
+    hypergrid = true
+```
+
+**Edit `config-include/StandaloneCommon.ini`**:
+
+```ini
+[DatabaseService]
+    ; Use SQLite for local testing (or MySQL for production)
+    StorageProvider = "OpenSim.Data.SQLite.dll"
+    ConnectionString = "URI=file:OpenSim.db,version=3"
+    
+    ; For MySQL (if preferred):
+    ; StorageProvider = "OpenSim.Data.MySQL.dll"
+    ; ConnectionString = "Server=localhost;Port=3306;Database=opensim;User Id=opensim;Password=opensim123;"
+
+[UserAccountService]
+    ; Enable user account service
+    LocalServiceModule = "OpenSim.Services.UserAccountService.dll:UserAccountService"
+    StorageProvider = "OpenSim.Data.SQLite.dll"
+    ConnectionString = "URI=file:OpenSim.db,version=3"
+
+[GridService]
+    ; Configure grid
+    LocalServiceModule = "OpenSim.Services.GridService.dll:GridService"
+    StorageProvider = "OpenSim.Data.SQLite.dll"
+    ConnectionString = "URI=file:OpenSim.db,version=3"
+    
+    ; Set region coordinates
+    RegionCoordinateMultiplier = 256
+
+[PresenceService]
+    ; Track user presence
+    LocalServiceModule = "OpenSim.Services.PresenceService.dll:PresenceService"
+    StorageProvider = "OpenSim.Data.SQLite.dll"
+    ConnectionString = "URI=file:OpenSim.db,version=3"
+```
+
+---
+
+### Step 3: Create Initial Region
+
+**Edit `Regions/Regions.ini`**:
+
+```ini
+[Default Region]
+    RegionName = "Ariadne"
+    RegionUUID = 11111111-1111-1111-1111-111111111111
+    Location = 1000,1000
+    InternalAddress = 0.0.0.0
+    InternalPort = 9000
+    ExternalHostName = localhost
+    ExternalPort = 9000
+    MasterAvatarUUID = 11111111-1111-1111-1111-111111111112
+    MasterAvatarFirstName = Admin
+    MasterAvatarLastName = User
+    MasterAvatarSandboxPassword = password
+```
+
+---
+
+### Step 4: Sync MongoDB Users to OpenSimulator
+
+Before starting OpenSim, create a user sync script that imports MongoDB users:
+
+**Create `sync_users.py`**:
+
+```python
+#!/usr/bin/env python3
+"""
+Sync MongoDB users to OpenSimulator SQLite database
+"""
+import sqlite3
+from pymongo import MongoClient
+from uuid import UUID
+import sys
+
+# MongoDB connection
+mongo_client = MongoClient("mongodb://localhost:27017")
+mongo_db = mongo_client["ariadne"]
+users_collection = mongo_db["users"]
+
+# SQLite connection
+sqlite_conn = sqlite3.connect("OpenSim.db")
+sqlite_cursor = sqlite_conn.cursor()
+
+def create_opensim_user(user_doc):
+    """Create OpenSim user from MongoDB document"""
+    
+    # Extract user info
+    sl_first_name = user_doc.get("sl_first_name", "User")
+    sl_last_name = user_doc.get("sl_last_name", "Avatar")
+    player_key = user_doc.get("sl_player_key", "")
+    
+    # Generate UUID from player key or create new
+    try:
+        user_uuid = str(UUID(player_key))
+    except:
+        user_uuid = str(UUID(int=hash(f"{sl_first_name}{sl_last_name}") & ((1 << 128) - 1)))
+    
+    # Create user in OpenSim
+    try:
+        sqlite_cursor.execute("""
+            INSERT OR IGNORE INTO UserAccounts 
+            (PrincipalID, ScopeID, FirstName, LastName, Email, ServiceURLs, Created)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            user_uuid,
+            "00000000-0000-0000-0000-000000000000",  # Default scope
+            sl_first_name,
+            sl_last_name,
+            f"{sl_first_name.lower()}.{sl_last_name.lower()}@ariadne.local",
+            "",
+            int(__import__('time').time())
+        ))
+        
+        print(f"✓ Created user: {sl_first_name} {sl_last_name} ({user_uuid})")
+        return user_uuid
+    except Exception as e:
+        print(f"✗ Error creating user {sl_first_name} {sl_last_name}: {e}")
+        return None
+
+def main():
+    print("Syncing MongoDB users to OpenSimulator...")
+    
+    # Get all users from MongoDB
+    users = list(users_collection.find())
+    print(f"Found {len(users)} users in MongoDB")
+    
+    # Create each user in OpenSim
+    created_count = 0
+    for user in users:
+        if create_opensim_user(user):
+            created_count += 1
+    
+    sqlite_conn.commit()
+    sqlite_conn.close()
+    mongo_client.close()
+    
+    print(f"\n✓ Synced {created_count} users to OpenSimulator")
+
+if __name__ == "__main__":
+    main()
+```
+
+**Run sync script**:
+
+```bash
+# Install Python MongoDB driver
+pip install pymongo
+
+# Run sync (from opensim-0.9.3.0/bin directory)
+python3 sync_users.py
+```
+
+---
+
+### Step 5: Start OpenSimulator
+
+**Linux/macOS**:
+
+```bash
+cd ~/opensim/opensim-0.9.3.0/bin
+
+# Set locale to English (required)
+export LANG=C
+
+# Start OpenSim
+dotnet OpenSim.dll
+```
+
+**Windows**:
+
+```cmd
+cd C:\opensim\opensim-0.9.3.0\bin
+OpenSim.exe
+```
+
+**First Run Configuration**:
+
+When OpenSim starts for the first time, it will ask:
+
+```
+Create new region? [y/N]: y
+Region name [OpenSim]: Ariadne
+Region UUID [11111111-1111-1111-1111-111111111111]: 
+Region location [1000,1000]: 
+Internal IP address [0.0.0.0]: 
+Internal port [9000]: 
+External hostname [localhost]: 
+Master avatar UUID [11111111-1111-1111-1111-111111111112]: 
+Master avatar name [Test User]: Admin User
+Master avatar password: password
+```
+
+---
+
+### Step 6: Connect Ariadne Java Backend
+
+**Update `Ariadne.java` to use local OpenSim**:
+
+```java
+// In Ariadne.java init() method
+@Override
+public void init() throws ServletException {
+    // MongoDB connection
+    mongoClient = MongoClients.create("mongodb://localhost:27017");
+    database = mongoClient.getDatabase("ariadne");
+    
+    // Log OpenSim connection info
+    System.out.println("Ariadne Backend initialized");
+    System.out.println("MongoDB: mongodb://localhost:27017/ariadne");
+    System.out.println("OpenSim: http://localhost:9000");
+}
+```
+
+**Deploy Ariadne servlet to OpenSim**:
+
+```bash
+# Copy Ariadne.jar to OpenSim plugins directory
+cp ariadne4j/target/Ariadne.jar ~/opensim/opensim-0.9.3.0/bin/Ariadne.jar
+
+# Or deploy to Tomcat/Jetty running on port 8080
+# Then configure LSL scripts to call: http://localhost:8080/ariadne
+```
+
+---
+
+### Step 7: Connect LSL Controller
+
+**In-world configuration for `controller.lsl`**:
+
+Create a notecard in the controller prim with:
+
+```
+[ARIADNE_CONFIG]
+BACKEND_URL=http://localhost:8080/ariadne
+BACKEND_PORT=8080
+MONGODB_ENABLED=1
+OPENSIM_MODE=1
+REGION_NAME=Ariadne
+GRID_NAME=Ariadne OpenSim
+```
+
+**LSL Controller HTTP calls**:
+
+```lsl
+// In controller.lsl
+string gBackendURL = "http://localhost:8080/ariadne";
+
+// Get node from Ariadne
+llHTTPRequest(
+    gBackendURL + "?nodeId=" + (string)nodeId + "&sessionId=" + sessionId,
+    [HTTP_METHOD, "GET", HTTP_TIMEOUT, 30.0],
+    ""
+);
+```
+
+---
+
+### Step 8: Test Integration
+
+**In-World Test**:
+
+1. Log into OpenSim with synced avatar
+2. Touch controller prim
+3. Verify HTTP request to Ariadne backend
+4. Verify MongoDB query executes
+5. Verify XML response parsed
+6. Verify assets delivered
+
+**Command-line Test**:
+
+```bash
+# Test Ariadne endpoint
+curl "http://localhost:8080/ariadne?nodeId=1&sessionId=test123"
+
+# Test MongoDB connection
+mongo mongodb://localhost:27017/ariadne
+> db.nodes.findOne()
+
+# Test OpenSim user
+cd ~/opensim/opensim-0.9.3.0/bin
+sqlite3 OpenSim.db "SELECT * FROM UserAccounts LIMIT 5;"
+```
+
+---
+
+### Step 9: Configure Firewall (if needed)
+
+**Allow OpenSim ports**:
+
+```bash
+# Linux (UFW)
+sudo ufw allow 9000/tcp
+sudo ufw allow 9000/udp
+
+# macOS (pfctl)
+# Add to /etc/pf.conf:
+# pass in proto tcp from any to any port 9000
+# pass in proto udp from any to any port 9000
+```
+
+---
+
+### Step 10: Backup & Maintenance
+
+**Daily Backup**:
+
+```bash
+#!/bin/bash
+# backup_opensim.sh
+
+BACKUP_DIR="/backups/opensim"
+OPENSIM_DIR="$HOME/opensim/opensim-0.9.3.0/bin"
+
+mkdir -p $BACKUP_DIR
+
+# Backup SQLite database
+cp $OPENSIM_DIR/OpenSim.db $BACKUP_DIR/OpenSim.db.$(date +%Y%m%d_%H%M%S)
+
+# Backup MongoDB
+mongodump --db ariadne --out $BACKUP_DIR/ariadne_$(date +%Y%m%d_%H%M%S)
+
+# Keep only last 7 days
+find $BACKUP_DIR -name "OpenSim.db.*" -mtime +7 -delete
+find $BACKUP_DIR -name "ariadne_*" -mtime +7 -delete
+
+echo "Backup complete"
+```
+
+**Monitor Performance**:
+
+```bash
+# Check OpenSim memory usage
+ps aux | grep OpenSim
+
+# Check MongoDB performance
+mongo mongodb://localhost:27017/ariadne
+> db.setProfilingLevel(1)
+> db.system.profile.find().pretty()
+
+# Check disk usage
+du -sh ~/opensim/opensim-0.9.3.0/bin/OpenSim.db
+du -sh /var/lib/mongodb/
+```
+
+---
+
+### Troubleshooting
+
+**OpenSim won't start**:
+- Check .NET 8.0 is installed: `dotnet --version`
+- Check libgdiplus: `ldconfig -p | grep gdiplus`
+- Check locale: `export LANG=C`
+
+**Users not syncing**:
+- Verify MongoDB is running: `mongo mongodb://localhost:27017`
+- Check sync script output for errors
+- Verify SQLite database exists: `ls -la OpenSim.db`
+
+**Ariadne not responding**:
+- Check Java servlet is deployed
+- Verify MongoDB connection: `mongo mongodb://localhost:27017/ariadne`
+- Check firewall: `netstat -tuln | grep 8080`
+
+**LSL script errors**:
+- Check HTTP_TIMEOUT is set (30 seconds minimum)
+- Verify backend URL in notecard
+- Check OpenSim console for HTTP errors
+
+---
+
 ## Open-Labyrinth Integration Summary
 
 ### What is Open-Labyrinth?
