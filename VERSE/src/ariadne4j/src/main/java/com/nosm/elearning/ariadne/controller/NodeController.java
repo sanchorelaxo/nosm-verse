@@ -4,7 +4,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import com.nosm.elearning.ariadne.AriadneMongoBackend;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.nosm.elearning.ariadne.service.NodeService;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,9 @@ import org.slf4j.LoggerFactory;
 public class NodeController {
 
     private static final Logger logger = LoggerFactory.getLogger(NodeController.class);
+
+    @Autowired
+    private NodeService nodeService;
 
     /**
      * Get a node with all questions and Ariadne assets
@@ -35,13 +39,13 @@ public class NodeController {
         logger.debug("Retrieving node {} for session {}", nodeId, sessionId);
         
         try {
-            Document nodeDoc = AriadneMongoBackend.getNode(nodeId);
+            Document nodeDoc = nodeService.getNodeWithAssets(nodeId);
             if (nodeDoc == null) {
                 logger.warn("Node {} not found", nodeId);
                 return ResponseEntity.notFound().build();
             }
             
-            String xml = AriadneMongoBackend.buildNodeXML(nodeDoc, sessionId);
+            String xml = nodeService.buildNodeXML(nodeDoc, sessionId);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
@@ -78,7 +82,7 @@ public class NodeController {
             nodeId, questionId, sessionId);
         
         try {
-            Document nextNode = AriadneMongoBackend.submitAnswer(
+            Document nextNode = nodeService.processAnswer(
                 sessionId, nodeId, questionId, answerValue);
             
             if (nextNode == null) {
@@ -86,7 +90,7 @@ public class NodeController {
                 return ResponseEntity.notFound().build();
             }
             
-            String xml = AriadneMongoBackend.buildNodeXML(nextNode, sessionId);
+            String xml = nodeService.buildNodeXML(nextNode, sessionId);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_XML);
