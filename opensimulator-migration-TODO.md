@@ -1595,10 +1595,10 @@ OpenSim is running
 ```
 
 **Tasks**:
-- [ ] Start OpenSimulator
-- [ ] Verify region loads successfully
-- [ ] Check for errors in console
-- [ ] Note the port (9000 for HTTP, 9001 for region)
+- [x] Start OpenSimulator - **COMPLETED** (Running successfully)
+- [x] Verify region loads successfully - **COMPLETED** (Ariadne Test Region initialized)
+- [x] Check for errors in console - **COMPLETED** (No critical errors)
+- [x] Note the port (9000 for HTTP, 9001 for region) - **COMPLETED**
 
 ---
 
@@ -1611,15 +1611,15 @@ OpenSim is running
 **Connection Settings**:
 - Grid: Custom
 - Login URL: http://127.0.0.1:9000
-- First Name: Admin
-- Last Name: User
-- Password: password
+- First Name: sanchorelaxo
+- Last Name: Algoma
+- Password: sim7664
 
 **Tasks**:
 - [ ] Download and install viewer
 - [ ] Configure custom grid login
 - [ ] Connect to local OpenSimulator
-- [ ] Create test avatar
+- [ ] Login with sanchorelaxo Algoma
 - [ ] Verify avatar in-world
 
 ---
@@ -1635,18 +1635,23 @@ OpenSim is running
 **Connect Java Backend**:
 ```bash
 # Update controller.lsl to point to local backend
-# Change cTestURL to: http://127.0.0.1:8080/ariadne4j/Ariadne?v=2&mode=slplay
+# Change cTestURL to: http://127.0.0.1:8080/ariadne/api/node
 
 # Restart OpenSimulator
 # Test node traversal from in-world
 ```
 
 **Tasks**:
-- [ ] Update LSL controller URL to backend
-- [ ] Test node retrieval
+- [ ] Update LSL controller URL to backend (http://127.0.0.1:8080/ariadne/api/node)
+- [ ] Test node retrieval via HTTP
 - [ ] Test answer submission
-- [ ] Test asset delivery
+- [ ] Test asset delivery on channels
 - [ ] Verify XML parsing in LSL
+
+**UUID Synchronization** ✅ COMPLETED:
+- User UUID: 96c38396-5692-4e0d-a54a-6c58ae7029da
+- Region UUID: f2c4e50d-e003-4c07-bcb4-64b0c3246800
+- MongoDB synced with OpenSimulator
 
 ---
 
