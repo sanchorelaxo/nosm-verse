@@ -680,7 +680,7 @@ option_back() {
     if (canGoBack){
 
         Rq_getnode = llHTTPRequest(urlroot+"&linkid="+oldNode+
-        "&sessid="+gSSID, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+        "&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
     }else{
         llSay(0, "You cannot go back to the "+oldNode+" node from this one (" + gNode + " node)");
     }
@@ -733,7 +733,7 @@ option_option(integer num) {
            // "&mnodeid="+nodeName+"&sessid="+gSSID);
 
             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&case="+gCase+
-            "&mnodeid="+nodeName+"&sessid="+gSSID, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+            "&mnodeid="+nodeName+"&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
         }else{
             if (gPage == "case list") {
                 if (nodeName == "_start") {
@@ -747,14 +747,14 @@ option_option(integer num) {
                         //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                         Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
                         "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
-                        [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+                        [HTTP_METHOD,"GET"], "");
                     }else{
                         if (nodeName != "") {
                             gCase = nodeName;
                             nodeName = llEscapeURL(nodeName);
                             //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
-                            "&case="+nodeName, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+                            "&case="+nodeName, [HTTP_METHOD,"GET"], "");
                         }
                     }
                 }
@@ -1011,7 +1011,7 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+"&mnodeid="+msg+"&av="+avname+stxt, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+            Rq_getnode = llHTTPRequest(urlroot+"&mnodeid="+msg+"&av="+avname+stxt, [HTTP_METHOD,"GET"], "");
         }
 
         if (channel==gHolodeckChatChannel){
