@@ -636,7 +636,10 @@ option_start(key id) {
     sendChatCommand(gPlayerTrackingObjChannel, "reset");
     sendChatCommand(gPIVOTEChannel, gResetCommands);
     resetElementsFull();
-    gSSID="";
+    // Generate a session ID if not already set
+    if (gSSID == "") {
+        gSSID = llMD5String((string)llGetUnixTime() + (string)llGetOwner(), 0);
+    }
     string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
     llSay(0, "[CONTROLLER DEBUG] Requesting node from: " + url);
     Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
