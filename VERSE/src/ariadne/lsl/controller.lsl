@@ -296,8 +296,6 @@ assignSL(string type, string target, string name, string val, integer duration){
         jump out;
     }
 
-    }
-
     if (type == "RLAnimation"|| type == "RLObject"|| type == "RLChat"|| type == "RLAction"|| type == "RLNotecard"
     ||  type == "RLTexture"|| type == "RLClothing"|| type == "RLIM"|| type == "RLHud"|| type == "RLSys"){
 
