@@ -632,13 +632,15 @@ config_load(string p, string v) {
 }
 
 option_start(key id) {
+    llSay(0, "[CONTROLLER DEBUG] option_start() called by " + llKey2Name(id));
     sendChatCommand(gPlayerTrackingObjChannel, "reset");
     sendChatCommand(gPIVOTEChannel, gResetCommands);
     resetElementsFull();
     gSSID="";
     string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
-  //  llSay(0, "start: "+ url);
+    llSay(0, "[CONTROLLER DEBUG] Requesting node from: " + url);
     Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
+    llSay(0, "[CONTROLLER DEBUG] HTTP request sent, ID: " + (string)Rq_getpage);
 }
 
 option_text() {
@@ -896,8 +898,8 @@ state load_config
                 // next line
                 Ds_getLine = llGetNotecardLine(gConfigCard, ++gLine);
             } else {
-                sendChatCommand(0, "Config loaded. Scanning for registered players...");
-
+                sendChatCommand(0, "[CONTROLLER DEBUG] Config loaded. Scanning for registered players...");
+                llSay(0, "[CONTROLLER DEBUG] Transitioning to active state");
                 //state findingPlayers;
                 state active;
             }
@@ -944,9 +946,13 @@ state active
     touch_start(integer num_detected) {
         // Click on controller to start node traversal
         key toucher = llDetectedKey(0);
+        llSay(0, "[CONTROLLER DEBUG] Touch detected from " + llKey2Name(toucher));
         if (toucher == llGetOwner() || toucher == gUserKey) {
+            llSay(0, "[CONTROLLER DEBUG] Touch authorized, starting node traversal");
             gUserKey = toucher;
             option_start(toucher);
+        } else {
+            llSay(0, "[CONTROLLER DEBUG] Touch denied - not owner or registered user");
         }
     }
 
@@ -1019,18 +1025,20 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID, [HTTP_METHOD,"GET"], "");
+            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID+"&owner="+avname, [HTTP_METHOD,"GET"], "");
         }
 
         if (channel==gHolodeckChatChannel){
             gCurrentSceneStatus = msg;
-
         }
-
     }
 
     http_response(key request_id, integer status, list metadata, string body) {
-        //llSay(0, body);
+        llSay(0, "[CONTROLLER DEBUG] HTTP Response received - Status: " + (string)status + ", Body length: " + (string)llStringLength(body));
+        if (status != 200) {
+            llSay(0, "[CONTROLLER DEBUG] ERROR - HTTP Status " + (string)status);
+            llSay(0, "[CONTROLLER DEBUG] Response body: " + llGetSubString(body, 0, 200));
+        }
         string errorTXT = "";
         //gOptions = [];
         parseFeed(body);

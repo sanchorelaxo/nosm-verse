@@ -182,31 +182,25 @@ default
 
      listen (integer ch, string s, key k, string msg) {
         if (ch == 603){
+            llSay(0, "[BRACELET DEBUG] Received on channel 603: " + msg);
             if( llSubStringIndex(msg, "~") > -1){
-          //      llSay(0, "bracelet heard ya: "+ msg);
+                llSay(0, "[BRACELET DEBUG] Parsing asset command");
                 list parts = llParseString2List(msg, ["~"], []);
                 string iKey = llList2String(parts, 0);
                 string itype =  llList2String(parts, 1);
                 string iname = llList2String(parts, 2);
                 string ival = llList2String(parts, 3);
-               // llSay(0, msg);
+                llSay(0, "[BRACELET DEBUG] Type: " + itype + ", Name: " + iname);
                 if ( (string)llGetOwner() == iKey || iKey == llKey2Name(llGetOwner()) ){
-                    //llSay(0,"ya?");
+                    llSay(0, "[BRACELET DEBUG] Asset command authorized, executing");
                     assignSL(itype, iname, ival);
                 }else{
-                   //  llSay(0, "Doesn't apply to me: "+ iKey);
+                    llSay(0, "[BRACELET DEBUG] Asset command denied - key mismatch: " + iKey + " vs " + (string)llGetOwner());
                 }
             }else{
                 if( llSubStringIndex(msg, "reset") > -1){
-                    //llSay(0, "resetting");
-                   // llSetTimerEvent(0.0);
-                    //llStopAnimation(curr_anim);
-                    //curr_anim = "";
-                    // states = [];
-                    // anims = [];
+                    llSay(0, "[BRACELET DEBUG] Reset command received");
                    llResetScript();
-                   // llListen( -1, "", NULL_KEY, "" );
-                    //llListen(0, "", llGetOwner(), "" );
                    llSleep(1);
                 }
             }
