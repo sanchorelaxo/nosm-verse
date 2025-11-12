@@ -660,7 +660,388 @@ private String buildNodeXML(Document nodeDoc, String sessionId) {
 
 ---
 
-### Phase 2: LSL Script Modifications (Week 3-4)
+### Phase 1.5: Spring Boot Migration (Week 2-3)
+
+#### Task 1.5.0: Create Maven pom.xml with Spring Boot
+
+**File**: `/VERSE/src/ariadne4j/pom.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.nosm.elearning</groupId>
+    <artifactId>ariadne4j</artifactId>
+    <version>2.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>Ariadne4j - OpenSimulator Edition</name>
+    <description>Ariadne educational game engine for OpenSimulator with MongoDB backend</description>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- Spring Boot Web Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- MongoDB Driver -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>4.11.0</version>
+        </dependency>
+
+        <!-- Lombok for reducing boilerplate -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+        </dependency>
+
+        <!-- Jackson for JSON -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+- [ ] Create pom.xml in project root
+- [ ] Verify Maven can resolve dependencies
+- [ ] Test build: `mvn clean package`
+
+---
+
+#### Task 1.5.1: Create Spring Boot Application Class
+
+**File**: `/VERSE/src/ariadne4j/src/main/java/com/nosm/elearning/ariadne/AriadneApplication.java`
+
+```java
+package com.nosm.elearning.ariadne;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+
+@SpringBootApplication
+public class AriadneApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AriadneApplication.class, args);
+    }
+
+    @Bean
+    public MongoClient mongoClient() {
+        return MongoClients.create("mongodb://localhost:27017");
+    }
+}
+```
+
+- [ ] Create AriadneApplication.java
+- [ ] Configure Spring Boot main class
+- [ ] Test application startup
+
+---
+
+#### Task 1.5.2: Create Spring Boot REST Controller
+
+**File**: `/VERSE/src/ariadne4j/src/main/java/com/nosm/elearning/ariadne/controller/NodeController.java`
+
+```java
+package com.nosm.elearning.ariadne.controller;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import com.nosm.elearning.ariadne.AriadneMongoBackend;
+import org.bson.Document;
+
+@RestController
+@RequestMapping("/api/node")
+public class NodeController {
+
+    @GetMapping("/{nodeId}")
+    public ResponseEntity<String> getNode(
+            @PathVariable int nodeId,
+            @RequestParam String sessionId) {
+        
+        Document nodeDoc = AriadneMongoBackend.getNode(nodeId);
+        if (nodeDoc == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        String xml = AriadneMongoBackend.buildNodeXML(nodeDoc, sessionId);
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/xml")
+            .body(xml);
+    }
+
+    @PostMapping("/{nodeId}/answer")
+    public ResponseEntity<String> submitAnswer(
+            @PathVariable int nodeId,
+            @RequestParam String sessionId,
+            @RequestParam int questionId,
+            @RequestParam String answerValue) {
+        
+        Document nextNode = AriadneMongoBackend.submitAnswer(
+            sessionId, nodeId, questionId, answerValue);
+        
+        if (nextNode == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        String xml = AriadneMongoBackend.buildNodeXML(nextNode, sessionId);
+        return ResponseEntity.ok()
+            .header("Content-Type", "application/xml")
+            .body(xml);
+    }
+}
+```
+
+- [ ] Create NodeController.java
+- [ ] Test endpoints with curl/Postman
+- [ ] Verify XML response format
+
+---
+
+#### Task 1.5.3: Create Spring Boot Configuration
+
+**File**: `/VERSE/src/ariadne4j/src/main/resources/application.yml`
+
+```yaml
+spring:
+  application:
+    name: ariadne4j
+  
+server:
+  port: 8080
+  servlet:
+    context-path: /ariadne
+
+logging:
+  level:
+    root: INFO
+    com.nosm.elearning.ariadne: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+mongodb:
+  uri: mongodb://localhost:27017
+  database: ariadne
+```
+
+- [ ] Create application.yml
+- [ ] Configure logging
+- [ ] Configure MongoDB connection
+
+---
+
+#### Task 1.5.4: Migrate HttpServlet to Spring Boot
+
+**Remove**: Old Ariadne.java (HttpServlet-based)
+
+**Create**: New service layer for business logic
+
+```java
+package com.nosm.elearning.ariadne.service;
+
+import org.springframework.stereotype.Service;
+import org.bson.Document;
+
+@Service
+public class NodeService {
+    
+    public Document getNodeWithAssets(int nodeId) {
+        return AriadneMongoBackend.getNode(nodeId);
+    }
+    
+    public Document processAnswer(String sessionId, int nodeId, 
+                                  int questionId, Object answerValue) {
+        return AriadneMongoBackend.submitAnswer(
+            sessionId, nodeId, questionId, answerValue);
+    }
+}
+```
+
+- [ ] Create service layer
+- [ ] Remove old HttpServlet code
+- [ ] Migrate business logic to services
+- [ ] Update controllers to use services
+
+---
+
+#### Task 1.5.5: Update Project Structure
+
+**Directory Structure**:
+```
+ariadne4j/
+├── pom.xml
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/nosm/elearning/ariadne/
+│   │   │       ├── AriadneApplication.java
+│   │   │       ├── controller/
+│   │   │       │   ├── NodeController.java
+│   │   │       │   └── CaseController.java
+│   │   │       ├── service/
+│   │   │       │   ├── NodeService.java
+│   │   │       │   └── SessionService.java
+│   │   │       ├── model/
+│   │   │       │   ├── Node.java
+│   │   │       │   ├── Case.java
+│   │   │       │   └── Session.java
+│   │   │       └── AriadneMongoBackend.java
+│   │   └── resources/
+│   │       ├── application.yml
+│   │       └── logback-spring.xml
+│   └── test/
+│       └── java/
+│           └── com/nosm/elearning/ariadne/
+│               └── AriadneApplicationTests.java
+├── WebContent/ (legacy - can be removed)
+└── README.md
+```
+
+- [ ] Create new Maven directory structure
+- [ ] Move source files to src/main/java
+- [ ] Create test directory structure
+- [ ] Remove old WebContent directory (or keep for reference)
+
+---
+
+#### Task 1.5.6: Build and Test Spring Boot Application
+
+```bash
+# Build with Maven
+mvn clean package
+
+# Run application
+java -jar target/ariadne4j-2.0.0.jar
+
+# Or run with Maven
+mvn spring-boot:run
+
+# Test endpoints
+curl "http://localhost:8080/ariadne/api/node/1?sessionId=test123"
+```
+
+- [ ] Build project successfully
+- [ ] Run Spring Boot application
+- [ ] Test REST endpoints
+- [ ] Verify MongoDB connectivity
+- [ ] Check logs for errors
+
+---
+
+#### Task 1.5.7: Create Docker Support (Optional)
+
+**File**: `Dockerfile`
+
+```dockerfile
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /app
+
+COPY target/ariadne4j-2.0.0.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**File**: `docker-compose.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: ariadne
+
+  ariadne:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017
+```
+
+- [ ] Create Dockerfile
+- [ ] Create docker-compose.yml
+- [ ] Test Docker build
+- [ ] Test Docker Compose deployment
+
+---
+
+### Phase 2: LSL Script Modifications (Week 4-5)
 
 #### Task 2.1: Fix Instant Message Delivery
 **File**: `controller.lsl` Lines 293-296, 454-461

@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: ariadne4j
+  
+server:
+  port: 8080
+  servlet:
+    context-path: /ariadne
+
+logging:
+  level:
+    root: INFO
+    com.nosm.elearning.ariadne: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/ariadne.log
+    max-size: 10MB
+    max-history: 10
+
+# MongoDB Configuration
+mongodb:
+  uri: ${MONGODB_URI:mongodb://localhost:27017}
+  database: ariadne
+
+# Application Configuration
+ariadne:
+  version: 2.0.0
+  environment: ${ENVIRONMENT:development}
+  session:
+    ttl-hours: 1
+    max-concurrent: 1000
