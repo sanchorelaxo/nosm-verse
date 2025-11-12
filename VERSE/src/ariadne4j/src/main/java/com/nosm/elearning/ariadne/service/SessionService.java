@@ -15,8 +15,6 @@ import java.util.*;
 public class SessionService {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionService.class);
-    private static final long SESSION_TTL_HOURS = 1;
-    private static final long SESSION_TTL_MILLIS = SESSION_TTL_HOURS * 60 * 60 * 1000;
 
     /**
      * Create a new session or get existing one
@@ -179,6 +177,7 @@ public class SessionService {
                 return new ArrayList<>();
             }
             
+            @SuppressWarnings("unchecked")
             List<Document> answers = (List<Document>) session.get("answers");
             if (answers == null) {
                 return new ArrayList<>();
