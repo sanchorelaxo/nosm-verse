@@ -1098,18 +1098,23 @@ gPlayerTrackingObjChannel = 603
 ---
 
 #### Task 2.3: HTTP Request Timeout Handling
-**File**: `controller.lsl` Lines 648, 689, 742, 755, 763, 1021
+**File**: `controller.lsl` Lines 646, 688, 741, 755, 762, 1019
 
-**Current**: `llHTTPRequest(url, [HTTP_METHOD,"GET"], "")`
+**Issue**: HTTP requests can hang indefinitely without timeout
 
-**Fix**: Add timeout parameter
+**Fix**: Add HTTP_TIMEOUT parameter to all llHTTPRequest calls
+
 ```lsl
-llHTTPRequest(url, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "")
+// Before
+Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
+
+// After  
+Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
 ```
 
-- [ ] Add HTTP_TIMEOUT to all 6 llHTTPRequest() calls
-- [ ] Set timeout to 30 seconds
-- [ ] Test timeout handling
+- [x] Add HTTP_TIMEOUT to all 6 llHTTPRequest calls - **COMPLETED**
+- [x] Set timeout to 30 seconds - **COMPLETED**
+- [ ] Test HTTP request handling in OpenSim - **PENDING** (requires OpenSim environment)
 
 ---
 

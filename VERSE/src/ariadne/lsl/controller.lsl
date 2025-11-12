@@ -643,7 +643,7 @@ option_start(key id) {
     gSSID="";
     string url = cTestURL+"&mnodeid="; // /root/data/classic
   //  llSay(0, "start: "+ url);
-    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
+    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
 }
 
 option_text() {
@@ -685,7 +685,7 @@ option_back() {
     if (canGoBack){
 
         Rq_getnode = llHTTPRequest(urlroot+"&linkid="+oldNode+
-        "&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
+        "&sessid="+gSSID, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
     }else{
         llSay(0, "You cannot go back to the "+oldNode+" node from this one (" + gNode + " node)");
     }
@@ -738,7 +738,7 @@ option_option(integer num) {
            // "&mnodeid="+nodeName+"&sessid="+gSSID);
 
             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&case="+gCase+
-            "&mnodeid="+nodeName+"&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
+            "&mnodeid="+nodeName+"&sessid="+gSSID, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
         }else{
             if (gPage == "case list") {
                 if (nodeName == "_start") {
@@ -752,14 +752,14 @@ option_option(integer num) {
                         //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                         Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
                         "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
-                        [HTTP_METHOD,"GET"], "");
+                        [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
                     }else{
                         if (nodeName != "") {
                             gCase = nodeName;
                             nodeName = llEscapeURL(nodeName);
                             //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
-                            "&case="+nodeName, [HTTP_METHOD,"GET"], "");
+                            "&case="+nodeName, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
                         }
                     }
                 }
@@ -1016,7 +1016,7 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+"&mnodeid="+msg+"&av="+avname+stxt, [HTTP_METHOD,"GET"], "");
+            Rq_getnode = llHTTPRequest(urlroot+"&mnodeid="+msg+"&av="+avname+stxt, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
         }
 
         if (channel==gHolodeckChatChannel){
