@@ -1,5 +1,5 @@
 integer gUseNewParser = TRUE;
-string cTestURL = "http://192.168.1.23:8080/ariadne/api/node/";
+string cTestURL = "http://127.0.0.1:8080/ariadne/api/node/";
 
 string cRootNode= "ariadne";
 
@@ -15,7 +15,7 @@ string cAsset = "asset";
 string cAssetType = "type";
 string cAssetName = "name";
 string cAssetTarget = "target";
-string cAssetId = "iid";
+string cAssetId = "id";
 
 string cLink = "link";
 string cLinkLabel = "label";
@@ -346,6 +346,62 @@ resetElements(){
 }
 
 string ampSepChar = "&amp;";
+
+parseAssets(string body) {
+    // Parse assets from new API format: <asset><id>...</id><type>...</type>...</asset>
+    string remaining = body;
+    integer assetPos = llSubStringIndex(remaining, "<asset>");
+    
+    while (assetPos != -1) {
+        // Find end of this asset block
+        remaining = llGetSubString(remaining, assetPos + 7, -1);
+        integer assetEnd = llSubStringIndex(remaining, "</asset>");
+        
+        if (assetEnd != -1) {
+            string assetBlock = llGetSubString(remaining, 0, assetEnd - 1);
+            
+            // Extract id
+            integer idStart = llSubStringIndex(assetBlock, "<id>") + 4;
+            integer idEnd = llSubStringIndex(assetBlock, "</id>");
+            string id = llGetSubString(assetBlock, idStart, idEnd - 1);
+            
+            // Extract type
+            integer typeStart = llSubStringIndex(assetBlock, "<type>") + 6;
+            integer typeEnd = llSubStringIndex(assetBlock, "</type>");
+            string type = llGetSubString(assetBlock, typeStart, typeEnd - 1);
+            
+            // Extract name
+            integer nameStart = llSubStringIndex(assetBlock, "<name>") + 6;
+            integer nameEnd = llSubStringIndex(assetBlock, "</name>");
+            string name = llGetSubString(assetBlock, nameStart, nameEnd - 1);
+            
+            // Extract value
+            integer valueStart = llSubStringIndex(assetBlock, "<value>") + 7;
+            integer valueEnd = llSubStringIndex(assetBlock, "</value>");
+            string value = llGetSubString(assetBlock, valueStart, valueEnd - 1);
+            
+            // Extract target
+            integer targetStart = llSubStringIndex(assetBlock, "<target>") + 8;
+            integer targetEnd = llSubStringIndex(assetBlock, "</target>");
+            string target = llGetSubString(assetBlock, targetStart, targetEnd - 1);
+            
+            // Add to lists
+            assetIds += [id];
+            assetTypes += [type];
+            assetNames += [name];
+            assetValues += [value];
+            assetTargets += [target];
+            
+            llSay(0, "[CONTROLLER DEBUG] Parsed asset: id=" + id + ", type=" + type + ", name=" + name);
+            
+            // Move to next asset
+            remaining = llGetSubString(remaining, assetEnd + 8, -1);
+            assetPos = llSubStringIndex(remaining, "<asset>");
+        } else {
+            assetPos = -1;
+        }
+    }
+}
 
 parseFeed(string body){
 
@@ -1046,6 +1102,7 @@ state active
         }
         string errorTXT = "";
         //gOptions = [];
+        parseAssets(body);
         parseFeed(body);
 
         gPage = "node";
@@ -1055,20 +1112,12 @@ state active
 
         integer nAssets = llGetListLength(assetTypes);
 
-        // first, get sequence
-        string seq = xtraktSeq(body, "SLInnerSequence", "value");
-        llSay(0, "[CONTROLLER DEBUG] SLInnerSequence value: " + seq);
-        list parts = llParseString2List(seq , [","], []);
-        integer n = llGetListLength(parts);
+        // Build orderedAssets from parsed assets (new API format)
+        orderedAssets = assetIds;
+        integer n = llGetListLength(orderedAssets);
         integer i;
-
-        orderedAssets = ["99999"]; // always add OL vpdText
+        
         llSay(0, "[CONTROLLER DEBUG] Number of assets in sequence: " + (string)n);
-
-        for(i = 0; i < n; i++){
-            string thisAssetId = llList2String(parts, i);
-            orderedAssets += [thisAssetId];
-        }
 
         // run the assets in order
         n = llGetListLength(orderedAssets);
