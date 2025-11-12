@@ -1044,29 +1044,36 @@ services:
 ### Phase 2: LSL Script Modifications (Week 4-5)
 
 #### Task 2.1: Fix Instant Message Delivery
-**File**: `controller.lsl` Lines 293-296, 454-461
+**File**: `controller.lsl` Lines 293-296
 
-**Issue**: Negative channel (-11674) relay unreliable in OpenSim
+**Current Code** (unreliable in OpenSim):
+```lsl
+if (type == "SLIM"){
+    sendChatCommand (-11674, target+"~"+val);  // Negative channel relay unreliable
+    jump out;
+}
+```
 
-**Fix**:
+**Issue**: Negative channel (-11674) relay unreliable in OpenSimulator
+
+**Fix** (use direct IM):
 ```lsl
 if (type == "SLIM"){
     list parts = llParseString2List(target+"~"+val, ["~"], []);
     llInstantMessage((key)llList2String(parts, 0), llList2String(parts, 1));
     jump out;
 }
-
-sendChatCommand (integer channel, string cmd) {
-    if (channel == gPIVOTEChannel && gPIVOTEPrefix != ""){
-        cmd = gPIVOTEPrefix+":"+ cmd;
-    }
-    llSay(channel, cmd);
-}
 ```
 
-- [ ] Remove IM relay logic from sendChatCommand()
-- [ ] Use llInstantMessage() directly
-- [ ] Test IM delivery
+**Changes**:
+- Replace negative channel relay with direct `llInstantMessage()` call
+- Parse target and message from combined string
+- No intermediate relay object needed
+
+- [x] Locate line 293-296 in controller.lsl - **COMPLETED**
+- [x] Replace SLIM handler with direct IM - **COMPLETED**
+- [ ] Test IM delivery in OpenSim - **PENDING** (requires OpenSim environment)
+- [ ] Verify no relay object dependency - **PENDING** (requires OpenSim environment)
 
 ---
 

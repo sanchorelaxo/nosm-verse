@@ -291,13 +291,11 @@ assignSL(string type, string target, string name, string val, integer duration){
     }
 
     if (type == "SLIM"){
-        sendChatCommand (-11674, target+"~"+val);
+        list parts = llParseString2List(target+"~"+val, ["~"], []);
+        llInstantMessage((key)llList2String(parts, 0), llList2String(parts, 1));
         jump out;
     }
 
-
-    if (type == "SLAction"){
-        sendChatCommand(gPlayerTrackingObjChannel, target+"~"+val);
     }
 
     if (type == "RLAnimation"|| type == "RLObject"|| type == "RLChat"|| type == "RLAction"|| type == "RLNotecard"
