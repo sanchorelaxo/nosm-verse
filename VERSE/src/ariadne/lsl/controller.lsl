@@ -253,7 +253,6 @@ assignSL(string type, string target, string name, string val, integer duration){
         option_media();
         llSleep(4.0); // show this url for a while at least...
         jump out;
-
     }
 
     if (type == "VPDMedia"){ //  Show an external patient movie on parcel viewer(s)
@@ -261,14 +260,12 @@ assignSL(string type, string target, string name, string val, integer duration){
         option_media();
         llSleep(4.0); // show this url for a while at least...
         jump out;
-
     }
 
     if (type == "SLAnimation"){
         //target = "27811330-3bb6-447e-a2b7-dffd322279a3"; // hard coded key for openSim
         sendChatCommand(gPlayerTrackingObjChannel, target+"~"+type+"~"+name+"~"+ val + "|gla3");
         jump out;
-
     }
 
     if (type == "SLBodypart" || type == "SLHud" || type == "SLTexture" || type == "SLPackage"
@@ -641,7 +638,7 @@ option_start(key id) {
     gSSID="";
     string url = cTestURL+"&mnodeid="; // /root/data/classic
   //  llSay(0, "start: "+ url);
-    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET", HTTP_TIMEOUT, 30.0], "");
+    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
 }
 
 option_text() {
