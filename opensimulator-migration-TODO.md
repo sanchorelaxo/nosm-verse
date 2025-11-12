@@ -1163,7 +1163,43 @@ if (type == "SLAnimation"){
 
 ### Phase 3: Java Backend Modifications (Week 4-5)
 
-#### Task 3.1: Session Management Compatibility
+#### Task 3.1: Create Service Layer for Node Operations
+**Files**: 
+- `NodeService.java` (NEW)
+- `NodeController.java` (UPDATED)
+
+**Implementation**:
+```java
+@Service
+public class NodeService {
+    public Document getNodeWithAssets(int nodeId)
+    public Document processAnswer(String sessionId, int nodeId, int questionId, Object answerValue)
+    public Document getCase(int caseId)
+    public Document getCaseStartNode(int caseId)
+    public Document createOrGetSession(String sessionId, int nodeId, String playerKey, String playerName)
+    public Document getSession(String sessionId)
+    public void setSessionVariable(String sessionId, String varName, Object varValue)
+    public Object getSessionVariable(String sessionId, String varName)
+    public Document getUser(String playerKey)
+    public String buildNodeXML(Document nodeDoc, String sessionId)
+}
+```
+
+**Changes**:
+- Created NodeService with @Service annotation
+- Injected NodeService into NodeController via @Autowired
+- Updated controller methods to use service layer
+- Added comprehensive logging and error handling
+- Added node structure validation
+
+- [x] Create service layer - **COMPLETED**
+- [x] Inject service into controller - **COMPLETED**
+- [x] Update controller methods - **COMPLETED**
+- [x] Add error handling and logging - **COMPLETED**
+
+---
+
+#### Task 3.2: Session Management Compatibility
 **File**: `Ariadne.java` Lines 121-131, 157-161
 
 - [ ] Verify Django backend availability
