@@ -947,7 +947,8 @@ state active
         // Click on controller to start node traversal
         key toucher = llDetectedKey(0);
         llSay(0, "[CONTROLLER DEBUG] Touch detected from " + llKey2Name(toucher));
-        if (toucher == llGetOwner() || toucher == gUserKey) {
+        // Allow owner or any user if gUserKey not yet set
+        if (toucher == llGetOwner() || gUserKey == NULL_KEY) {
             llSay(0, "[CONTROLLER DEBUG] Touch authorized, starting node traversal");
             gUserKey = toucher;
             option_start(toucher);
