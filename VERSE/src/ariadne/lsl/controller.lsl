@@ -1,5 +1,5 @@
 integer gUseNewParser = TRUE;
-string cTestURL = "http://142.51.75.11/ariadne4j/Ariadne?v=2&mode=slplay";
+string cTestURL = "http://127.0.0.1:8080/ariadne/api/node";
 
 string cRootNode= "ariadne";
 
