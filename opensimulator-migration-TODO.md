@@ -1429,6 +1429,227 @@ setParcelMedia(string url) {
 
 ---
 
+### OpenSimulator Setup Guide
+
+**Official Documentation**: http://opensimulator.org/wiki/User_Documentation
+
+#### Step 1: Download OpenSimulator
+**Link**: http://opensimulator.org/wiki/Download
+
+**For Linux (Pop!_OS)**:
+```bash
+# Download latest stable release (0.9.3.0 or newer)
+cd ~/Downloads
+wget https://github.com/OpenSimulator/OpenSimulator/releases/download/OpenSim-0.9.3.0/opensim-0.9.3.0.tar.gz
+
+# Extract
+tar -xzf opensim-0.9.3.0.tar.gz
+mv opensim-0.9.3.0 ~/opensimulator
+cd ~/opensimulator
+```
+
+**Tasks**:
+- [ ] Download OpenSimulator 0.9.3.0 or newer
+- [ ] Extract to ~/opensimulator
+- [ ] Verify extraction successful
+
+---
+
+#### Step 2: Install Dependencies
+**Link**: http://opensimulator.org/wiki/Dependencies
+
+**For Linux (Pop!_OS)**:
+```bash
+# Install required packages
+sudo apt-get update
+sudo apt-get install -y mono-complete libmono-system-net-http4.0-cil
+
+# Verify Mono installation
+mono --version
+```
+
+**Tasks**:
+- [ ] Install Mono runtime
+- [ ] Verify Mono version (4.0+)
+- [ ] Check all dependencies installed
+
+---
+
+#### Step 3: Build OpenSimulator
+**Link**: http://opensimulator.org/wiki/Build_Instructions
+
+**For Linux**:
+```bash
+cd ~/opensimulator
+./runprebuild.sh
+nant
+
+# Or use mono directly
+mono --version
+xbuild OpenSim.sln
+```
+
+**Tasks**:
+- [ ] Run prebuild script
+- [ ] Build with nant or xbuild
+- [ ] Verify build successful (no errors)
+
+---
+
+#### Step 4: Configure OpenSimulator
+**Link**: http://opensimulator.org/wiki/Configuration
+
+**Create OpenSim.ini**:
+```bash
+cd ~/opensimulator/bin
+cp OpenSim.ini.example OpenSim.ini
+```
+
+**Edit OpenSim.ini**:
+```ini
+[Startup]
+    ; Standalone mode (single server)
+    gridmode = false
+    
+    ; Physics engine
+    physics = BulletSim
+    
+    ; Welcome message
+    welcome_message = Welcome to Ariadne OpenSimulator
+
+[Network]
+    ; External IP (change to your machine IP if needed)
+    ExternalHostName = 127.0.0.1
+    
+    ; HTTP port
+    http_listener_port = 9000
+
+[Database]
+    ; Use SQLite for standalone
+    storage_plugin = "OpenSim.Data.SQLite.dll"
+    storage_connection_string = "URI=file:OpenSim.db,version=3"
+```
+
+**Tasks**:
+- [ ] Copy OpenSim.ini.example to OpenSim.ini
+- [ ] Configure standalone mode
+- [ ] Set physics engine to BulletSim
+- [ ] Configure network settings
+- [ ] Configure database (SQLite)
+
+---
+
+#### Step 5: Configure Regions
+**Link**: http://opensimulator.org/wiki/Configuring_Regions
+
+**Create Regions.ini**:
+```bash
+cd ~/opensimulator/bin
+cp Regions.ini.example Regions.ini
+```
+
+**Edit Regions.ini**:
+```ini
+[Ariadne Test Region]
+    RegionUUID = 00000000-0000-0000-0000-000000000001
+    Location = 1000,1000
+    InternalAddress = 0.0.0.0
+    InternalPort = 9001
+    ExternalHostName = 127.0.0.1
+    ExternalPort = 9001
+    MasterAvatarFirstName = Admin
+    MasterAvatarLastName = User
+    MasterAvatarSandboxPassword = password
+```
+
+**Tasks**:
+- [ ] Copy Regions.ini.example to Regions.ini
+- [ ] Create test region "Ariadne Test Region"
+- [ ] Set region UUID and location
+- [ ] Configure ports (9001)
+- [ ] Set master avatar credentials
+
+---
+
+#### Step 6: Run OpenSimulator
+**Link**: http://opensimulator.org/wiki/Running
+
+**Start OpenSimulator**:
+```bash
+cd ~/opensimulator/bin
+
+# On Linux with Mono
+mono OpenSim.exe
+
+# Or use the shell script
+./opensim
+```
+
+**Expected Output**:
+```
+OpenSimulator 0.9.3.0
+...
+Region [Ariadne Test Region] loaded successfully
+...
+OpenSim is running
+```
+
+**Tasks**:
+- [ ] Start OpenSimulator
+- [ ] Verify region loads successfully
+- [ ] Check for errors in console
+- [ ] Note the port (9000 for HTTP, 9001 for region)
+
+---
+
+#### Step 7: Connect Viewer
+**Recommended Viewers**:
+- Firestorm (https://www.firestormviewer.org/)
+- Singularity (http://www.singularityviewer.org/)
+- Kokua (http://www.kokuaviewer.org/)
+
+**Connection Settings**:
+- Grid: Custom
+- Login URL: http://127.0.0.1:9000
+- First Name: Admin
+- Last Name: User
+- Password: password
+
+**Tasks**:
+- [ ] Download and install viewer
+- [ ] Configure custom grid login
+- [ ] Connect to local OpenSimulator
+- [ ] Create test avatar
+- [ ] Verify avatar in-world
+
+---
+
+#### Step 8: Test Ariadne Integration
+**Test Checklist**:
+- [ ] Avatar can move around region
+- [ ] Chat works on public channels
+- [ ] Inventory accessible
+- [ ] Can rez objects
+- [ ] Can wear attachments
+
+**Connect Java Backend**:
+```bash
+# Update controller.lsl to point to local backend
+# Change cTestURL to: http://127.0.0.1:8080/ariadne4j/Ariadne?v=2&mode=slplay
+
+# Restart OpenSimulator
+# Test node traversal from in-world
+```
+
+**Tasks**:
+- [ ] Update LSL controller URL to backend
+- [ ] Test node retrieval
+- [ ] Test answer submission
+- [ ] Test asset delivery
+- [ ] Verify XML parsing in LSL
+
+---
+
 ### Phase 5: Configuration & Testing (Week 6-7)
 
 ```java
