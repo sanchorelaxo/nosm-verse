@@ -1,5 +1,5 @@
 integer gUseNewParser = TRUE;
-string cTestURL = "http://127.0.0.1:8080/ariadne/api/node?";
+string cTestURL = "http://127.0.0.1:8080/api/node/";
 
 string cRootNode= "ariadne";
 
@@ -636,7 +636,7 @@ option_start(key id) {
     sendChatCommand(gPIVOTEChannel, gResetCommands);
     resetElementsFull();
     gSSID="";
-    string url = cTestURL+"&mnodeid="; // /root/data/classic
+    string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
   //  llSay(0, "start: "+ url);
     Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
 }
@@ -732,8 +732,7 @@ option_option(integer num) {
          //   llSay(0, "sending URL"+urlroot+"&api=shownode&case="+gCase+
            // "&mnodeid="+nodeName+"&sessid="+gSSID);
 
-            Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&case="+gCase+
-            "&mnodeid="+nodeName+"&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
+            Rq_getnode = llHTTPRequest(urlroot+nodeName+"?sessionId="+gSSID, [HTTP_METHOD,"GET"], "");
         }else{
             if (gPage == "case list") {
                 if (nodeName == "_start") {
@@ -1011,7 +1010,7 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+"&mnodeid="+msg+"&av="+avname+stxt, [HTTP_METHOD,"GET"], "");
+            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID, [HTTP_METHOD,"GET"], "");
         }
 
         if (channel==gHolodeckChatChannel){
