@@ -2501,3 +2501,157 @@ Ariadne was originally a PHP add-on to Open-Labyrinth that injected Second Life-
 - **Unified Codebase**: Java backend handles both Open-Labyrinth and Ariadne logic
 - **Scalability**: Supports 500+ concurrent users with <50ms node traversal latency
 - **Flexibility**: Denormalized documents allow easy addition of new asset types or node properties
+
+---
+
+## Phase 6: Web UI Modernization (Week 8-10)
+
+### Overview
+Migrate from legacy jQuery-based HTML pages to modern React SPA with Open-Labyrinth functionality.
+
+### Current State
+- Legacy jQuery pages in `WebContent/`
+- Basic asset editor, data viewer
+- No case/node management UI
+- No question editor
+
+### Phase 6.1: Case Management UI
+**Endpoints**: 
+- `GET /api/cases` - List all cases
+- `POST /api/cases` - Create new case
+- `GET /api/case/{caseId}` - Get case details
+- `PUT /api/case/{caseId}` - Update case
+- `DELETE /api/case/{caseId}` - Delete case
+
+**Tasks**:
+- [ ] Setup React project with TypeScript
+- [ ] Create case list view with pagination
+- [ ] Implement case creation form
+- [ ] Implement case editor (metadata, start node)
+- [ ] Add case deletion with confirmation
+- [ ] Implement search/filter by name, author, date
+
+---
+
+### Phase 6.2: Node Editor UI
+**Endpoints**:
+- `GET /api/case/{caseId}/nodes` - Get all nodes in case
+- `POST /api/node` - Create new node
+- `PUT /api/node/{nodeId}` - Update node
+- `DELETE /api/node/{nodeId}` - Delete node
+- `GET /api/node/{nodeId}/links` - Get node connections
+
+**Tasks**:
+- [ ] Create node tree visualization (D3.js or similar)
+- [ ] Implement node creation form
+- [ ] Implement node editor (title, description, content)
+- [ ] Add node linking UI (parent/child relationships)
+- [ ] Implement node deletion
+- [ ] Add node preview
+
+---
+
+### Phase 6.3: Question Editor UI
+**Endpoints**:
+- `GET /api/node/{nodeId}/questions` - Get questions for node
+- `POST /api/question` - Create question
+- `PUT /api/question/{questionId}` - Update question
+- `DELETE /api/question/{questionId}` - Delete question
+
+**Question Types**:
+- Multiple choice (radio buttons)
+- Multiple select (checkboxes)
+- Text input
+- Slider
+- Dropdown
+
+**Tasks**:
+- [ ] Create question list for node
+- [ ] Implement question type selector
+- [ ] Create form for each question type
+- [ ] Add option/answer management
+- [ ] Implement branching logic editor
+- [ ] Add question preview
+
+---
+
+### Phase 6.4: Asset Management UI (Ariadne-Specific)
+**Endpoints**:
+- `GET /api/assets` - List all assets
+- `POST /api/assets/upload` - Upload asset
+- `GET /api/node/{nodeId}/assets` - Get assets for node
+- `POST /api/node/{nodeId}/assets` - Assign asset to node
+- `DELETE /api/asset/{assetId}` - Delete asset
+
+**Asset Types** (31 total):
+- SLAnimation, SLChat, SLSound, SLObject
+- SLBodypart, SLClothing, SLHud, SLPackage
+- SLAction, SLParticleSystem, SLLandmark, SLTexture
+- SLMedia, SLInventory, etc.
+
+**Tasks**:
+- [ ] Create asset upload interface
+- [ ] Implement asset library/browser
+- [ ] Create asset type selector
+- [ ] Implement asset assignment to nodes
+- [ ] Add asset preview
+- [ ] Create asset type mapping UI
+
+---
+
+### Phase 6.5: Session & User Management UI
+**Endpoints**:
+- `GET /api/sessions` - List active sessions
+- `GET /api/session/{sessionId}` - Get session details
+- `DELETE /api/session/{sessionId}` - End session
+- `GET /api/users` - List users
+- `GET /api/user/{userId}` - Get user details
+
+**Tasks**:
+- [ ] Create session monitor dashboard
+- [ ] Show active players and current node
+- [ ] Implement session termination
+- [ ] Create user management interface
+- [ ] Add user statistics/progress tracking
+- [ ] Implement session history viewer
+
+---
+
+### Phase 6.6: Reporting & Analytics UI
+**Endpoints**:
+- `GET /api/analytics/case/{caseId}` - Case statistics
+- `GET /api/analytics/node/{nodeId}` - Node statistics
+- `GET /api/analytics/user/{userId}` - User progress
+
+**Tasks**:
+- [ ] Create case analytics dashboard
+- [ ] Show node completion rates
+- [ ] Implement user progress reports
+- [ ] Add time-on-task analytics
+- [ ] Create answer distribution charts
+- [ ] Implement export to CSV/PDF
+
+---
+
+### Technology Stack
+- **Frontend**: React 18+ with TypeScript
+- **State Management**: Redux or Zustand
+- **UI Components**: Material-UI or Tailwind CSS
+- **Visualization**: D3.js for node tree, Chart.js for analytics
+- **HTTP Client**: Axios or Fetch API
+- **Build**: Vite or Create React App
+- **Testing**: Jest + React Testing Library
+
+### Estimated Timeline
+- Phase 6.1 (Case Mgmt): 2-3 days
+- Phase 6.2 (Node Editor): 3-4 days
+- Phase 6.3 (Question Editor): 2-3 days
+- Phase 6.4 (Asset Mgmt): 2-3 days
+- Phase 6.5 (Session/User): 1-2 days
+- Phase 6.6 (Analytics): 2-3 days
+- **Total**: ~2-3 weeks
+
+### Priority
+- **HIGH**: Phases 6.1, 6.2, 6.3 (core functionality)
+- **MEDIUM**: Phase 6.4 (Ariadne-specific)
+- **LOW**: Phases 6.5, 6.6 (nice-to-have)
