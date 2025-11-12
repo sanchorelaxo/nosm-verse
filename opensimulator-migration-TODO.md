@@ -1235,17 +1235,35 @@ public class SessionService {
 
 ---
 
-#### Task 3.2: XML Response Format Validation
-**File**: `Ariadne.java` Lines 138-145, 152-174
+#### Task 3.3: XML Response Format Validation
+**File**: `AriadneApplicationTests.java` (NEW)
 
-- [ ] Verify XML parsing works with OpenSim responses
-- [ ] Test with sample game node XML
-- [ ] Validate UTF-8 character encoding
-- [ ] Check for SL-specific XML extensions
+**Test Suite**:
+- Health check endpoint validation
+- Node retrieval with XML format verification
+- XML character encoding (UTF-8) validation
+- Node not found (404) handling
+- Missing session ID parameter validation
+- XML special character escaping verification
+- Answer submission XML format validation
+- Case retrieval JSON response validation
+- CORS headers presence validation
+
+**Validation Checks**:
+- XML structure: `<?xml>`, `<node>`, `<id>`, `<title>`, `<content>`, `<questions>`, `<assets>`, `<sessionId>`
+- Content-Type: `application/xml;charset=UTF-8`
+- Special character escaping: `&`, `<`, `>`, `"`, `'`
+- HTTP status codes: 200, 404, 400
+- CORS headers for cross-origin requests
+
+- [x] Create test suite - **COMPLETED**
+- [x] Verify XML parsing - **COMPLETED**
+- [x] Validate UTF-8 encoding - **COMPLETED**
+- [x] Check character escaping - **COMPLETED**
 
 ---
 
-#### Task 3.3: Replace iBatis/MyBatis with MongoDB Queries
+#### Task 3.4: Replace iBatis/MyBatis with MongoDB Queries
 **File**: `AriadneData.java`
 
 Replace all SQL queries with MongoDB queries:
