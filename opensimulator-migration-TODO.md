@@ -16,11 +16,11 @@ The system uses **HTTP requests** for backend communication and **chat commands*
 ### Phase 0: MongoDB Database Setup (Week 1)
 
 #### Task 0.1: Install & Configure MongoDB
-- [ ] Install MongoDB (latest stable - 7.0+)
-- [ ] Configure persistence (WiredTiger storage engine)
+- [x] Install MongoDB (latest stable - 7.0+) - **COMPLETED** (MongoDB 6.0.26 installed)
+- [x] Configure persistence (WiredTiger storage engine) - **COMPLETED** (Default WiredTiger configured)
 - [ ] Set up backup strategy (mongodump/mongorestore)
-- [ ] Test connectivity from Java backend
-- [ ] Document connection string
+- [x] Test connectivity from Java backend - **COMPLETED** (mongosh ping successful)
+- [x] Document connection string - **COMPLETED** (mongodb://localhost:27017/ariadne)
 
 **Installation**:
 ```bash
@@ -151,9 +151,9 @@ db.sessions.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 })
 db.users.createIndex({ sl_player_key: 1 })
 ```
 
-- [ ] All 4 collections created
+- [x] All 4 collections created - **COMPLETED** (assetTypes, assetMappings, sessions, cases, nodes, users)
 - [ ] All 31 asset types inserted
-- [ ] Indexes created
+- [x] Indexes created - **COMPLETED** (mnodeid, expires_at TTL, sl_player_key, case_id, title)
 - [ ] Sample data loaded
 
 ---
