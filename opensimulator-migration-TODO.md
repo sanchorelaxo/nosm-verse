@@ -1322,6 +1322,115 @@ public class SessionService {
 
 ### Phase 4: LSL Asset Delivery Objects (Week 5-6)
 
+**Scope**: Bracelet/Player Tracking Object + Media Relay Object (PIVOTE Mannequin SKIPPED)
+
+#### Task 4.1: Bracelet/Player Tracking Object
+**File**: `bracelet.lsl`
+
+**Purpose**: Worn by avatars to receive animations, objects, and inventory items
+
+**Functionality**:
+- Listen on channel 603 (gPlayerTrackingObjChannel)
+- Parse asset delivery commands: `target~type~name~value`
+- Handle asset types:
+  - SLAnimation: Play animations on wearer
+  - SLObject: Rez objects at wearer location
+  - SLSound: Play sounds for wearer
+  - SLBodypart: Attach bodyparts to wearer
+  - SLHud: Attach HUD to wearer
+  - SLTexture: Apply textures
+  - SLPackage: Deliver inventory packages
+  - SLLandmark: Give landmarks
+  - SLNotecard: Give notecards
+  - SLClothing: Wear clothing
+
+**Implementation**:
+```lsl
+default {
+    listen(integer channel, string name, key id, string msg) {
+        if (channel == 603) {  // gPlayerTrackingObjChannel
+            list parts = llParseString2List(msg, ["~"], []);
+            string target = llList2String(parts, 0);
+            string type = llList2String(parts, 1);
+            string assetName = llList2String(parts, 2);
+            string assetValue = llList2String(parts, 3);
+            
+            handleAssetDelivery(type, assetName, assetValue);
+        }
+    }
+}
+
+handleAssetDelivery(string type, string name, string value) {
+    if (type == "SLAnimation") {
+        llStartAnimation(name);
+    } else if (type == "SLObject") {
+        llRezObject(name, llGetPos() + <0, 0, 1>, ZERO_VECTOR, ZERO_ROTATION, 0);
+    } else if (type == "SLSound") {
+        llPlaySound(value, 1.0);
+    } else if (type == "SLBodypart" || type == "SLClothing") {
+        llAttachToAvatar(llGetInventoryKey(name), ATTACH_CHEST);
+    } else if (type == "SLHud") {
+        llAttachToAvatar(llGetInventoryKey(name), ATTACH_HUD_CENTER_2);
+    }
+}
+```
+
+**Tasks**:
+- [ ] Create bracelet.lsl script
+- [ ] Implement asset delivery handlers
+- [ ] Test with sample animations/objects
+- [ ] Verify OpenSim compatibility
+- [ ] Document asset type mappings
+
+---
+
+#### Task 4.2: Media Relay Object
+**File**: `media_relay.lsl`
+
+**Purpose**: Display media (images, videos, web pages) on parcel media
+
+**Functionality**:
+- Listen on channel -63342 (gMediaCh)
+- Parse media URLs
+- Set parcel media properties
+- Handle media types:
+  - Images (JPG, PNG)
+  - Videos (MP4, WebM)
+  - Web pages (HTML)
+  - Maps (Google Maps, SL Maps)
+
+**Implementation**:
+```lsl
+default {
+    listen(integer channel, string name, key id, string msg) {
+        if (channel == -63342) {  // gMediaCh
+            setParcelMedia(msg);
+        }
+    }
+}
+
+setParcelMedia(string url) {
+    // Set parcel media
+    llParcelMediaCommandList([
+        PARCEL_MEDIA_COMMAND_URL, url,
+        PARCEL_MEDIA_COMMAND_TYPE, "text/html",
+        PARCEL_MEDIA_COMMAND_SIZE, <512, 512>,
+        PARCEL_MEDIA_COMMAND_DESC, "Ariadne Media"
+    ]);
+}
+```
+
+**Tasks**:
+- [ ] Create media_relay.lsl script
+- [ ] Implement media URL parsing
+- [ ] Test with sample media URLs
+- [ ] Verify parcel media compatibility
+- [ ] Document supported media types
+
+---
+
+### Phase 5: Configuration & Testing (Week 6-7)
+
 ```java
 protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     // ... existing update logic ...
