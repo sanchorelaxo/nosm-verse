@@ -160,7 +160,15 @@ db.users.createIndex({ sl_player_key: 1 })
 
 #### Task 0.3: Add MongoDB Client to Java Backend
 
-**Add Dependency** (pom.xml):
+**Add Dependency** (Eclipse Dynamic Web Project - add JARs to WEB-INF/lib):
+
+For Eclipse projects, download and add these JARs to `/WebContent/WEB-INF/lib/`:
+- `mongodb-driver-sync-4.11.0.jar`
+- `mongodb-driver-core-4.11.0.jar`
+- `bson-4.11.0.jar`
+- `bson-record-codec-4.11.0.jar`
+
+**Alternative (Maven projects - pom.xml)**:
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
@@ -218,10 +226,10 @@ public class Ariadne extends HttpServlet {
 }
 ```
 
-- [ ] Add MongoDB driver to pom.xml
-- [ ] Implement MongoDB connection
-- [ ] Test connection pooling
-- [ ] Replace iBatis/MyBatis with MongoDB queries
+- [ ] Add MongoDB driver JARs to WEB-INF/lib - **PENDING** (manual download required)
+- [ ] Implement MongoDB connection - **PENDING** (requires JARs in classpath)
+- [ ] Test connection pooling - **PENDING** (requires JARs in classpath)
+- [ ] Replace iBatis/MyBatis with MongoDB queries - **PENDING** (AriadneMongoBackend created)
 
 ---
 
