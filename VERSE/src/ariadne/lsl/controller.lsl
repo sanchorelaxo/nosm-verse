@@ -927,6 +927,10 @@ state load_config
             }
         }
     }
+
+    http_response(key request_id, integer status, list metadata, string body) {
+        llSay(0, "[CONTROLLER DEBUG] HTTP response in load_config state - ignoring");
+    }
 }
 
 state active
@@ -1041,10 +1045,12 @@ state active
         llSay(0, "[CONTROLLER DEBUG] *** HTTP_RESPONSE EVENT TRIGGERED ***");
         llSay(0, "[CONTROLLER DEBUG] Request ID: " + (string)request_id);
         llSay(0, "[CONTROLLER DEBUG] Expected ID: " + (string)Rq_getpage);
+        llSay(0, "[CONTROLLER DEBUG] Match: " + (string)(request_id == Rq_getpage));
         llSay(0, "[CONTROLLER DEBUG] HTTP Response received - Status: " + (string)status + ", Body length: " + (string)llStringLength(body));
         if (status != 200) {
             llSay(0, "[CONTROLLER DEBUG] ERROR - HTTP Status " + (string)status);
             llSay(0, "[CONTROLLER DEBUG] Response body: " + llGetSubString(body, 0, 200));
+            return;
         }
         string errorTXT = "";
         //gOptions = [];
