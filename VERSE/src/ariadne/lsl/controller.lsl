@@ -642,8 +642,10 @@ option_start(key id) {
     }
     string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
     llSay(0, "[CONTROLLER DEBUG] Requesting node from: " + url);
-    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD,"GET"], "");
+    llSay(0, "[CONTROLLER DEBUG] URL length: " + (string)llStringLength(url));
+    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
     llSay(0, "[CONTROLLER DEBUG] HTTP request sent, ID: " + (string)Rq_getpage);
+    llSay(0, "[CONTROLLER DEBUG] Waiting for http_response event...");
 }
 
 option_text() {
@@ -685,7 +687,7 @@ option_back() {
     if (canGoBack){
 
         Rq_getnode = llHTTPRequest(urlroot+"&linkid="+oldNode+
-        "&sessid="+gSSID, [HTTP_METHOD,"GET"], "");
+        "&sessid="+gSSID, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
     }else{
         llSay(0, "You cannot go back to the "+oldNode+" node from this one (" + gNode + " node)");
     }
@@ -729,18 +731,6 @@ option_option(integer num) {
         if (gUseNewParser) nodeName = llList2String(linkRefs, num); // is it that easy? must we subt by 1
         //llSay(0, "nodeName: "+nodeName + " - "+(string)llGetListLength(linkRefs) + " - "+ llList2CSV(linkRefs));
 
-        if (gUseNewParser) urlroot = cTestURL;
-
-        if (gPage == "node") {
-            nodeName = llEscapeURL(nodeName);
-
-         //   llSay(0, "sending URL"+urlroot+"&api=shownode&case="+gCase+
-           // "&mnodeid="+nodeName+"&sessid="+gSSID);
-
-            Rq_getnode = llHTTPRequest(urlroot+nodeName+"?sessionId="+gSSID, [HTTP_METHOD,"GET"], "");
-        }else{
-            if (gPage == "case list") {
-                if (nodeName == "_start") {
                     nodeName = "";
                     option_start(NULL_KEY);
                     nodeName = "";
@@ -751,14 +741,14 @@ option_option(integer num) {
                         //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                         Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
                         "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
-                        [HTTP_METHOD,"GET"], "");
+                        [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
                     }else{
                         if (nodeName != "") {
                             gCase = nodeName;
                             nodeName = llEscapeURL(nodeName);
                             //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
-                            "&case="+nodeName, [HTTP_METHOD,"GET"], "");
+                            "&case="+nodeName, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
                         }
                     }
                 }
@@ -1033,7 +1023,7 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID+"&owner="+avname, [HTTP_METHOD,"GET"], "");
+            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID+"&owner="+avname, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
         }
 
         if (channel==gHolodeckChatChannel){
