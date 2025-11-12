@@ -643,7 +643,7 @@ option_start(key id) {
     string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
     llSay(0, "[CONTROLLER DEBUG] Requesting node from: " + url);
     llSay(0, "[CONTROLLER DEBUG] URL length: " + (string)llStringLength(url));
-    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
+    Rq_getpage = llHTTPRequest(url, [HTTP_METHOD, "GET"], "");
     llSay(0, "[CONTROLLER DEBUG] HTTP request sent, ID: " + (string)Rq_getpage);
     llSay(0, "[CONTROLLER DEBUG] Waiting for http_response event...");
 }
@@ -687,7 +687,7 @@ option_back() {
     if (canGoBack){
 
         Rq_getnode = llHTTPRequest(urlroot+"&linkid="+oldNode+
-        "&sessid="+gSSID, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
+        "&sessid="+gSSID, [HTTP_METHOD, "GET"], "");
     }else{
         llSay(0, "You cannot go back to the "+oldNode+" node from this one (" + gNode + " node)");
     }
@@ -741,14 +741,14 @@ option_option(integer num) {
                         //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                         Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
                         "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
-                        [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
+                        [HTTP_METHOD, "GET"], "");
                     }else{
                         if (nodeName != "") {
                             gCase = nodeName;
                             nodeName = llEscapeURL(nodeName);
                             //if (gUseNewParser) urlroot = cTestURL + "1.xml";
                             Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
-                            "&case="+nodeName, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
+                            "&case="+nodeName, [HTTP_METHOD, "GET"], "");
                         }
                     }
                 }
@@ -1023,7 +1023,7 @@ state active
 
             key thisowner = llGetOwner();
             string avname = llKey2Name(thisowner);
-            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID+"&owner="+avname, [HTTP_METHOD, "GET", HTTP_MIMETYPE, "text/xml"], "");
+            Rq_getnode = llHTTPRequest(urlroot+msg+"?sessionId="+gSSID+"&owner="+avname, [HTTP_METHOD, "GET"], "");
         }
 
         if (channel==gHolodeckChatChannel){
