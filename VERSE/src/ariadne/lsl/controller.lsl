@@ -643,9 +643,14 @@ option_start(key id) {
     string url = cTestURL+"1?sessionId="+gSSID; // Start with node 1
     llSay(0, "[CONTROLLER DEBUG] Requesting node from: " + url);
     llSay(0, "[CONTROLLER DEBUG] URL length: " + (string)llStringLength(url));
+    llSay(0, "[CONTROLLER DEBUG] About to call llHTTPRequest...");
     Rq_getpage = llHTTPRequest(url, [HTTP_METHOD, "GET"], "");
-    llSay(0, "[CONTROLLER DEBUG] HTTP request sent, ID: " + (string)Rq_getpage);
-    llSay(0, "[CONTROLLER DEBUG] Waiting for http_response event...");
+    llSay(0, "[CONTROLLER DEBUG] HTTP request returned, ID: " + (string)Rq_getpage);
+    if (Rq_getpage == NULL_KEY) {
+        llSay(0, "[CONTROLLER DEBUG] ERROR: llHTTPRequest returned NULL_KEY!");
+    } else {
+        llSay(0, "[CONTROLLER DEBUG] Waiting for http_response event...");
+    }
 }
 
 option_text() {
@@ -731,27 +736,24 @@ option_option(integer num) {
         if (gUseNewParser) nodeName = llList2String(linkRefs, num); // is it that easy? must we subt by 1
         //llSay(0, "nodeName: "+nodeName + " - "+(string)llGetListLength(linkRefs) + " - "+ llList2CSV(linkRefs));
 
-                    nodeName = "";
-                    option_start(NULL_KEY);
-                    nodeName = "";
-                }else{
-                    if (nodeName == "_more") {
-                        gOffset += gBlock;
-                        nodeName = "";
-                        //if (gUseNewParser) urlroot = cTestURL + "1.xml";
-                        Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
-                        "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
-                        [HTTP_METHOD, "GET"], "");
-                    }else{
-                        if (nodeName != "") {
-                            gCase = nodeName;
-                            nodeName = llEscapeURL(nodeName);
-                            //if (gUseNewParser) urlroot = cTestURL + "1.xml";
-                            Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
-                            "&case="+nodeName, [HTTP_METHOD, "GET"], "");
-                        }
-                    }
-                }
+        if (nodeName == "_start") {
+            nodeName = "";
+            option_start(NULL_KEY);
+            nodeName = "";
+        } else if (nodeName == "_more") {
+            gOffset += gBlock;
+            nodeName = "";
+            //if (gUseNewParser) urlroot = cTestURL + "1.xml";
+            Rq_getpage = llHTTPRequest(urlroot+"&api=list&offset="+(string)gOffset+
+            "&block="+(string)gBlock+"&filter="+gFilter+"&avail="+llEscapeURL(gExerciseList),
+            [HTTP_METHOD, "GET"], "");
+        } else {
+            if (nodeName != "") {
+                gCase = nodeName;
+                nodeName = llEscapeURL(nodeName);
+                //if (gUseNewParser) urlroot = cTestURL + "1.xml";
+                Rq_getnode = llHTTPRequest(urlroot+"&api=shownode&av="+llEscapeURL(llKey2Name(gUserKey))+
+                "&case="+nodeName, [HTTP_METHOD, "GET"], "");
             }
         }
     }
