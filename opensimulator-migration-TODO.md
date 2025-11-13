@@ -1720,9 +1720,9 @@ sessions.insertOne(session);
 6. [x] Chat message delivered: "Welcome to Ariadne! You are now in the test region."
 7. [x] Animation command sent: "type=SLAnimation, value=wave"
 
-**Asset Types Tested** ✅:
-- [x] SLAnimation (wave) - WORKING
-- [x] SLChat (welcome message) - WORKING
+**Asset Types Tested** (31 total):
+- [x] SLAnimation (wave) - WORKING 
+- [x] SLChat (welcome message) - WORKING 
 - [ ] SLSound (next to test)
 - [ ] SLObject
 - [ ] SLBodypart
@@ -1736,6 +1736,16 @@ sessions.insertOne(session);
 - [ ] SLMedia
 - [ ] SLInventory
 - [ ] (17 more types)
+
+**OpenSimulator Animations**  IMPORTED:
+- Total animations: 66 built-in animations
+- Imported to MongoDB: assetMappings collection
+- Animation names: Wave, Dance 1-8, Laugh, Smile, Bow, Clap, etc.
+- All animations are case-insensitive
+- Ready for use in SLAnimation assets
+
+**Supported Animations** (66 total):
+Afraid, Angry, Away, Backflip, Belly Laugh, BigSmile, Blow Kiss, Bored, Bow, Clap, Court Bow, Cry, Dance 1-8, Disdain, Drink, Embarrassed, Finger Wag, Fist Pump, Flirt, Frown, Gesture, Jump For Joy, Kiss My Butt, Laugh, Muscle Relax, No (Unhappy), No, Nya-nya-nya, One Two Punch, Open Mouth, Point, Point at Other, Point at Self, Punch Left, Punch Right, RPS Count, RPS Paper, RPS Rock, RPS Scissors, Repulsed, Roundhouse Kick, Sad, Salute, Shout, Shrug, Smile, Smoke Idle, Smoke Inhale, Surprise, Sword Strike, Tantrum, TongueOut, Wave, Whisper, Whistle, Wink, Wink (Hollywood), Worry, Yes
 
 **Completed Milestones**:
 - [x] Bracelet script compiles
