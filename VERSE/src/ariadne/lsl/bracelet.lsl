@@ -19,12 +19,17 @@ list valOpts = llParseString2List(val,["|"],[]);
 
 
     if (type == "SLAnimation"){
-        //duration~isLoop~loopCount~loopCtrls
+        //val format: animation_name|duration|isLoop|loopCount|loopCtrls
+        // Extract the animation name (first part before |)
+        string animName = llList2String(valOpts, 0);
+
+        llSay(0, "[BRACELET DEBUG] SLAnimation: name=" + name + ", animName=" + animName);
+
         integer foundstate = 0;
         integer n = llGetListLength(valOpts);
         integer i;
         for(i = 0; i < n; i++){
-          if (i==3) { // any ctrls defined
+          if (i==4) { // any ctrls defined (index 4 in valOpts)
             list ctrl_val_list = llParseString2List(llList2String(valOpts, i),[","],[]);
             integer ll = llGetListLength(ctrl_val_list);
             integer j;
@@ -33,17 +38,17 @@ list valOpts = llParseString2List(val,["|"],[]);
                 if(llListFindList(ctrl_val_list,[curVal]) != -1){
                     // must add both, as array position must match... i think.
                     foundstate = 1;
-                    anims += name;
+                    anims += animName;
                     states += curVal;
                 }
             }
           }
         }
         if (foundstate == 0){ // auto assign to default if no ctrls defined
-            anims += name;
+            anims += animName;
             states += "Standing";
         }
-        //llSay(0, "anim"+ llList2String(anims,0) + "state" +llList2String(states,0));
+        llSay(0, "[BRACELET DEBUG] Animation queued: " + animName + ", state: Standing");
         llRequestPermissions(llGetOwner(),PERMISSION_TRIGGER_ANIMATION);//we ask for permissions
         jump out;
     }
@@ -115,13 +120,13 @@ list valOpts = llParseString2List(val,["|"],[]);
     if (type == "SLLandmark"){
         llGiveInventory(llGetOwner(), name);
         llInstantMessage(llGetOwner(), "The " +name + " landmark has been added to your inventory.");
-    	jump out;
+        jump out;
     }
 
     if (type == "SLTexture"){
         llGiveInventory(llGetOwner(), name);
         llInstantMessage(llGetOwner(), "The " +name + " texture has been added to your inventory.");
-    	jump out;
+        jump out;
     }
 
     if (type == "SLClothing"){
@@ -148,7 +153,17 @@ default
     }
 
     run_time_permissions(integer perms){
-        llSetTimerEvent(pulse);
+        if (perms & PERMISSION_TRIGGER_ANIMATION) {
+            llSay(0, "[BRACELET DEBUG] Animation permission granted");
+            // Start any queued animation immediately
+            if (llGetListLength(anims) > 0) {
+                string animToPlay = llList2String(anims, 0);
+                llSay(0, "[BRACELET DEBUG] Playing queued animation: " + animToPlay);
+                llStartAnimation(animToPlay);
+                curr_anim = animToPlay;
+            }
+            llSetTimerEvent(pulse);
+        }
     }
 
     timer(){
@@ -159,7 +174,7 @@ default
         if((anim_index != -1) && (anim_overrided != anim_state))//IF we havent specified this anim must be ignored
         {
             anim_overrided = anim_state;
-            llSetText("",<1,1,1>,1.0);//DEBUG displaying the state
+            //llSetText("",<1,1,1>,1.0);//DEBUG displaying the state
             if(llList2String(anims,anim_index) == "PASS_ON")
             {
                 if(curr_anim != "")
@@ -171,8 +186,10 @@ default
                 if(stop_anim != "")
                     llStopAnimation(stop_anim);
 
-                if(curr_anim != stop_anim)//if its the same anim we already play no need to change it
+                if(curr_anim != stop_anim) { //if its the same anim we already play no need to change it
+                    llSay(0, "[BRACELET DEBUG] Starting animation: " + curr_anim);
                     llStartAnimation(curr_anim);
+                }
 
                 if(anim_state == "Walking")//another lil hack so the av turn itself 180 when walking backward
                     llStopAnimation("walk");//comment these 2 lines if you have a real backward animation
@@ -182,25 +199,31 @@ default
 
      listen (integer ch, string s, key k, string msg) {
         if (ch == 603){
-            llSay(0, "[BRACELET DEBUG] Received on channel 603: " + msg);
             if( llSubStringIndex(msg, "~") > -1){
-                llSay(0, "[BRACELET DEBUG] Parsing asset command");
+                llSay(0, "bracelet heard ya: "+ msg);
                 list parts = llParseString2List(msg, ["~"], []);
                 string iKey = llList2String(parts, 0);
                 string itype =  llList2String(parts, 1);
                 string iname = llList2String(parts, 2);
                 string ival = llList2String(parts, 3);
-                llSay(0, "[BRACELET DEBUG] Type: " + itype + ", Name: " + iname);
-                if ( (string)llGetOwner() == iKey || iKey == llKey2Name(llGetOwner()) ){
-                    llSay(0, "[BRACELET DEBUG] Asset command authorized, executing");
+                llSay(0, msg);
+                if ( (string)llGetOwner() == iKey || iKey == llKey2Name(llGetOwner()) || iKey == "avatar" ){
+                    llSay(0,"ya?");
                     assignSL(itype, iname, ival);
                 }else{
-                    llSay(0, "[BRACELET DEBUG] Asset command denied - key mismatch: " + iKey + " vs " + (string)llGetOwner());
+                   //  llSay(0, "Doesn't apply to me: "+ iKey);
                 }
             }else{
                 if( llSubStringIndex(msg, "reset") > -1){
-                    llSay(0, "[BRACELET DEBUG] Reset command received");
+                    llSay(0, "resetting");
+                   // llSetTimerEvent(0.0);
+                    //llStopAnimation(curr_anim);
+                    //curr_anim = "";
+                    // states = [];
+                    // anims = [];
                    llResetScript();
+                   // llListen( -1, "", NULL_KEY, "" );
+                    //llListen(0, "", llGetOwner(), "" );
                    llSleep(1);
                 }
             }
