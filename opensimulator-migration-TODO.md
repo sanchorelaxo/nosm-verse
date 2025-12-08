@@ -2970,6 +2970,60 @@ curl "http://localhost:8080/ariadne/api/node/1?sessionId=test123"
 - Ariadne assets (SLChat, SLAnimation)
 - Session ID
 
+### In-World Test: December 8, 2025 @ 17:48 EST
+
+**Test Setup:**
+- Avatar: sanchorelaxo Algoma wearing bracelet
+- Viewer: Singularity connected to local OpenSimulator
+- Action: Touch controller prim
+
+**Debug Output Captured:**
+```
+[CONTROLLER DEBUG] Touch detected from sanchorelaxo Algoma
+[CONTROLLER DEBUG] Touch authorized, starting node traversal
+[CONTROLLER DEBUG] Requesting node from: http://127.0.0.1:8080/ariadne/api/node/1?sessionId=0ad57e3f1cea040b2505c7e7184a7fa9
+[CONTROLLER DEBUG] HTTP request returned, ID: 87a86ba4-7429-4678-9648-c0d860b0e015
+[CONTROLLER DEBUG] *** HTTP_RESPONSE EVENT TRIGGERED ***
+[CONTROLLER DEBUG] HTTP Response received - Status: 200, Body length: 909
+[CONTROLLER DEBUG] Parsed asset: id=1, type=SLChat, name=welcome_message
+[CONTROLLER DEBUG] Parsed asset: id=2, type=SLAnimation, name=welcome_animation
+[CONTROLLER DEBUG] Total assets to process: 2
+[CONTROLLER DEBUG] Processing asset 0: type=SLChat, value=Welcome to Ariadne! You are now in the test region.
+Controller: Welcome to Ariadne! You are now in the test region.
+[CONTROLLER DEBUG] Processing asset 1: type=SLAnimation, value=wave
+Bracelet: bracelet heard ya: avatar~SLAnimation~welcome_animation~wave|gla3
+Bracelet: [BRACELET DEBUG] SLAnimation: name=welcome_animation, animName=wave
+Bracelet: [BRACELET DEBUG] Animation queued: wave, state: Standing
+Bracelet: About to start animation: wave
+```
+
+**Results:**
+- ✅ HTTP request/response working (Status 200, 909 bytes)
+- ✅ XML parsing working (2 assets extracted)
+- ✅ SLChat delivered (message displayed in chat)
+- ✅ SLAnimation sent to bracelet (received on channel 603)
+- ✅ Bracelet parsed animation command
+- ❌ **Animation not playing on avatar** (see Issue #1 below)
+- ❌ **Viewer prim texture not updating** (see Issue #2 below)
+
+### Known Issues (December 8, 2025)
+
+**Issue #1: Animation Not Playing**
+- **Symptom**: Bracelet says "About to start animation: wave" but avatar doesn't perform wave
+- **Root Cause**: `bracelet.lsl` line 179-181 has missing braces - `llStartAnimation` runs unconditionally
+- **Additional**: Animation permission may not be granted yet when timer fires
+- **File**: `VERSE/src/ariadne/lsl/bracelet.lsl`
+- **Fix Required**: Add braces around conditional block and verify permission flow
+
+**Issue #2: Viewer Prim Texture Not Updating**
+- **Symptom**: Controller prim shows original texture instead of web content from Ariadne
+- **Root Cause**: Media-on-a-prim (MOAP) or parcel media not configured
+- **Possible Fixes**:
+  1. Use `llSetPrimMediaParams()` to set prim face to display URL
+  2. Configure parcel media settings
+  3. Verify media relay object is present and listening on channel -63342
+- **Status**: Needs investigation
+
 ### How to Start Services
 
 **1. MongoDB** (usually auto-starts):
