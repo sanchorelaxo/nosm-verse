@@ -1,0 +1,20 @@
+# Logs
+logs/
+*.log
+
+# Compiled Java
+VERSE/src/ariadne4j/target/
+
+# IDE
+.project
+.classpath
+.settings/
+*.iml
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+*.pid

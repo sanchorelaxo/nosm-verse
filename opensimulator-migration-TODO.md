@@ -3006,16 +3006,25 @@ Bracelet: About to start animation: wave
 - ❌ **Animation not playing on avatar** (see Issue #1 below)
 - ❌ **Viewer prim texture not updating** (see Issue #2 below)
 
-### Known Issues (December 8, 2025)
+### Issues Resolved (December 8, 2025)
 
-**Issue #1: Animation Not Playing**
-- **Symptom**: Bracelet says "About to start animation: wave" but avatar doesn't perform wave
-- **Root Cause**: `bracelet.lsl` line 179-181 has missing braces - `llStartAnimation` runs unconditionally
-- **Additional**: Animation permission may not be granted yet when timer fires
-- **File**: `VERSE/src/ariadne/lsl/bracelet.lsl`
-- **Fix Required**: Add braces around conditional block and verify permission flow
+**Issue #1: Animation Not Playing** ✅ RESOLVED
+- **Symptom**: Bracelet says "About to start animation: wave" but avatar doesn't perform animation
+- **Root Causes Found**:
+  1. `llStartAnimation()` requires permission request - unreliable timing
+  2. OSSL functions `osAvatarPlayAnimation`/`osAvatarStopAnimation` disabled by default
+  3. Invalid animation names (e.g., "tpose" doesn't exist)
+- **Solution**:
+  1. Created `bracelet-new.lsl` using `osAvatarPlayAnimation()` (no permission needed)
+  2. Enabled OSSL functions in `config-include/osslDefaultEnable.ini`:
+     ```ini
+     Allow_osAvatarPlayAnimation = true
+     Allow_osAvatarStopAnimation = true
+     ```
+  3. Use valid built-in animation names (e.g., "clap", "bow", "dance1")
+- **Status**: ✅ Working - Avatar successfully performs animations!
 
-**Issue #2: Viewer Prim Texture Not Updating**
+**Issue #2: Viewer Prim Texture Not Updating** (Open)
 - **Symptom**: Controller prim shows original texture instead of web content from Ariadne
 - **Root Cause**: Media-on-a-prim (MOAP) or parcel media not configured
 - **Possible Fixes**:
@@ -3024,7 +3033,46 @@ Bracelet: About to start animation: wave
   3. Verify media relay object is present and listening on channel -63342
 - **Status**: Needs investigation
 
+### OSSL Permission Configuration
+
+OpenSimulator requires explicit permission for certain OSSL functions. Key settings:
+
+**File**: `/home/rjodouin/opensimulator/bin/config-include/osslDefaultEnable.ini`
+
+```ini
+[OSSL]
+  ; Animation functions (required for Ariadne bracelet)
+  Allow_osAvatarPlayAnimation = true
+  Allow_osAvatarStopAnimation = true
+```
+
+**Note**: These functions are disabled by default for security reasons (can force animations on avatars without consent). Only enable in trusted environments.
+
+### Valid Built-in Animation Names
+
+Common animations that work with `osAvatarPlayAnimation()`:
+- `clap`, `bow`, `wave`, `salute`
+- `dance1` through `dance8`
+- `express_laugh`, `express_cry`, `express_afraid`
+- `angry_tantrum`, `angry_fingerwag`
+- `blowkiss`, `courtbow`, `curtsy`
+
+Full list: http://wiki.secondlife.com/wiki/Internal_Animations
+
 ### How to Start Services
+
+**Quick Start** (recommended):
+```bash
+cd /home/rjodouin/Documents/git/nosm-verse
+./scripts/start-ariadne.sh
+```
+
+**Quick Stop**:
+```bash
+./scripts/stop-ariadne.sh
+```
+
+**Manual Start**:
 
 **1. MongoDB** (usually auto-starts):
 ```bash
@@ -3049,4 +3097,5 @@ dotnet OpenSim.dll
 |-----------|-------------|-------------|
 | Ariadne4j | `src/main/resources/application.yml` | port: 8080, mongodb: localhost:27017 |
 | OpenSimulator | `bin/OpenSim.ini` | port: 9000, OutboundDisallowForUserScriptsExcept: 127.0.0.1:8080 |
+| OpenSimulator | `bin/config-include/osslDefaultEnable.ini` | Allow_osAvatarPlayAnimation: true |
 | MongoDB | `/etc/mongod.conf` | port: 27017, bindIp: localhost |
