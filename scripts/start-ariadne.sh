@@ -48,7 +48,8 @@ fi
 echo ""
 echo "Starting OpenSimulator..."
 cd "$OPENSIM_DIR"
-nohup dotnet OpenSim.dll > opensim-console.log 2>&1 &
+echo "$(date '+%F %T') - Starting OpenSimulator with REST console (-console=rest)" >> opensim-console.log
+nohup dotnet OpenSim.dll -console=rest >> opensim-console.log 2>&1 &
 OPENSIM_PID=$!
 echo "  OpenSimulator started (PID: $OPENSIM_PID)"
 sleep 5
