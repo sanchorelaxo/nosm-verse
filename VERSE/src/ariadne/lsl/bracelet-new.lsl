@@ -40,7 +40,9 @@ assignSL(string type, string name, string val) {
     if (type == "SLSound") {
         llSetSoundQueueing(TRUE);
         llSetSoundRadius(gSensorRange);
-        llTriggerSound(name, gSoundVolume);
+        // val contains the sound UUID
+        llSay(0, "[BRACELET DEBUG] Playing sound: " + name + " (UUID: " + val + ")");
+        llTriggerSound(val, gSoundVolume);
         jump out;
     }
 

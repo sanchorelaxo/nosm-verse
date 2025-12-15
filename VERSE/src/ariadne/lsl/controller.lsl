@@ -351,49 +351,49 @@ parseAssets(string body) {
     // Parse assets from new API format: <asset><id>...</id><type>...</type>...</asset>
     string remaining = body;
     integer assetPos = llSubStringIndex(remaining, "<asset>");
-    
+
     while (assetPos != -1) {
         // Find end of this asset block
         remaining = llGetSubString(remaining, assetPos + 7, -1);
         integer assetEnd = llSubStringIndex(remaining, "</asset>");
-        
+
         if (assetEnd != -1) {
             string assetBlock = llGetSubString(remaining, 0, assetEnd - 1);
-            
+
             // Extract id
             integer idStart = llSubStringIndex(assetBlock, "<id>") + 4;
             integer idEnd = llSubStringIndex(assetBlock, "</id>");
             string id = llGetSubString(assetBlock, idStart, idEnd - 1);
-            
+
             // Extract type
             integer typeStart = llSubStringIndex(assetBlock, "<type>") + 6;
             integer typeEnd = llSubStringIndex(assetBlock, "</type>");
             string type = llGetSubString(assetBlock, typeStart, typeEnd - 1);
-            
+
             // Extract name
             integer nameStart = llSubStringIndex(assetBlock, "<name>") + 6;
             integer nameEnd = llSubStringIndex(assetBlock, "</name>");
             string name = llGetSubString(assetBlock, nameStart, nameEnd - 1);
-            
+
             // Extract value
             integer valueStart = llSubStringIndex(assetBlock, "<value>") + 7;
             integer valueEnd = llSubStringIndex(assetBlock, "</value>");
             string value = llGetSubString(assetBlock, valueStart, valueEnd - 1);
-            
+
             // Extract target
             integer targetStart = llSubStringIndex(assetBlock, "<target>") + 8;
             integer targetEnd = llSubStringIndex(assetBlock, "</target>");
             string target = llGetSubString(assetBlock, targetStart, targetEnd - 1);
-            
+
             // Add to lists
             assetIds += [id];
             assetTypes += [type];
             assetNames += [name];
             assetValues += [value];
             assetTargets += [target];
-            
+
             llSay(0, "[CONTROLLER DEBUG] Parsed asset: id=" + id + ", type=" + type + ", name=" + name);
-            
+
             // Move to next asset
             remaining = llGetSubString(remaining, assetEnd + 8, -1);
             assetPos = llSubStringIndex(remaining, "<asset>");
@@ -1116,7 +1116,7 @@ state active
         orderedAssets = assetIds;
         integer n = llGetListLength(orderedAssets);
         integer i;
-        
+
         llSay(0, "[CONTROLLER DEBUG] Number of assets in sequence: " + (string)n);
 
         // run the assets in order

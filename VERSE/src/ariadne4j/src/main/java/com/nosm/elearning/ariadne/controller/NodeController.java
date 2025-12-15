@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.nosm.elearning.ariadne.service.NodeService;
+import com.nosm.elearning.ariadne.AriadneMongoBackend;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class NodeController {
     @GetMapping("/{nodeId}")
     public ResponseEntity<String> getNode(
             @PathVariable int nodeId,
-            @RequestParam String sessionId) {
+            @RequestParam(required = false, defaultValue = "anonymous") String sessionId) {
         
         logger.debug("Retrieving node {} for session {}", nodeId, sessionId);
         

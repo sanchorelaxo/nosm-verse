@@ -1,6 +1,9 @@
 spring:
   application:
     name: ariadne4j
+  web:
+    resources:
+      static-locations: file:/home/rjodouin/Documents/git/nosm-verse/VERSE/src/ariadne/server/,classpath:/static/
   
 server:
   port: 8080

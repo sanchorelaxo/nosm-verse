@@ -51,20 +51,27 @@ Querystring.prototype.contains = function(key) {
 
 
 var qs = new Querystring()
-var optionList = qs.get("options");
+
+// Display main text if present
 if (qs.contains("dtext")){
 	var mainText = qs.get("dtext");
 	document.write("<br/><h1 style='font-size:500%'>"+mainText + "</h1><hr/><br/>");
-	}
-
-var optList = optionList.split(",");
-var arLen=optList.length;
-var displayStr = "<ol> "
-for ( var i=0, len=arLen; i<len; ++i ){
- displayStr += "<li><h1 style='font-size:350%'>"+optList[i]+"</h1></li>";
 }
-displayStr += "</ol> "
-document.write(displayStr);
+
+// Handle options - controller sends "doptions", also support "options"
+var optionList = qs.get("doptions") || qs.get("options");
+if (optionList && optionList.length > 0) {
+	var optList = optionList.split(",");
+	var arLen = optList.length;
+	var displayStr = "<ol> ";
+	for (var i = 0, len = arLen; i < len; ++i) {
+		if (optList[i] && optList[i].length > 0) {
+			displayStr += "<li><h1 style='font-size:350%'>" + optList[i] + "</h1></li>";
+		}
+	}
+	displayStr += "</ol> ";
+	document.write(displayStr);
+}
 </script>
 </body>
 </html>
