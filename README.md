@@ -8,32 +8,46 @@ replaces the Second Life grid.
 
 ## Architecture
 
-```
- +-------------------+     HTTP/XML      +-------------------+
- |  OpenSimulator    | <--------------> |   Ariadne4j       |
- |  (Region server)  |   LSL llHTTPRequest|  (Spring Boot 3)  |
- |                   |                   |                   |
- |  LSL scripts:     |  -63342 (media)   |  REST API:        |
- |  - controller.lsl |  603 (bracelet)   |  /ariadne/api/    |
- |  - bracelet.lsl   |  687686 (PIVOTE)  |  node/{id}        |
- |  - media_relay.lsl|  -8787 (signup)   |  Users             |
- |  - regbooth.lsl   |                   |                   |
- |  - link_assign.lsl|                   +--------+----------+
- |  - buildHelper.lsl|                            |
- +-------------------+                            | MongoDB
-                                                   v
-                                          +-------------------+
-                                          |  MongoDB          |
-                                          |  Database: ariadne|
-                                          |                   |
-                                          |  Collections:     |
-                                          |  - cases          |
-                                          |  - nodes          |
-                                          |  - sessions (TTL) |
-                                          |  - assetTypes (26)|
-                                          |  - assetMappings  |
-                                          |  - users          |
-                                          +-------------------+
+```mermaid
+graph LR
+    subgraph OpenSim["OpenSimulator (port 9000/9001)"]
+        direction TB
+        Controller["Controller Prim<br/>controller.lsl"]
+        Bracelet["Bracelet (worn)<br/>bracelet.lsl"]
+        MediaRelay["Media Relay Prim<br/>media_relay.lsl"]
+        RegBooth["Registration Booth<br/>regbooth.lsl"]
+        LinkAssign["Link Assign Prims<br/>ariadne_link_assign.lsl"]
+        BuildHelper["Build Helper<br/>buildHelper.lsl"]
+    end
+
+    subgraph Ariadne4j["Ariadne4j - Spring Boot 3 (port 8080)"]
+        direction TB
+        API["REST API<br/>/ariadne/api/node/{id}"]
+        Users["Users Endpoint<br/>/ariadne/Users"]
+        Static["Static Assets<br/>show.html, jQuery"]
+    end
+
+    subgraph MongoDB["MongoDB (port 27017)"]
+        direction TB
+        DB[("Database: ariadne")]
+        Cases["cases"]
+        Nodes["nodes"]
+        Sessions["sessions (TTL)"]
+        AssetTypes["assetTypes (26)"]
+        AssetMappings["assetMappings"]
+        UsersColl["users"]
+    end
+
+    Controller -->|"HTTP GET (XML)"| API
+    RegBooth -->|"HTTP POST (register)"| Users
+    API --> DB
+    Users --> DB
+    Static --> Controller
+
+    Controller -->|"ch 603 (assets)"| Bracelet
+    Controller -->|"ch -63342 (media URLs)"| MediaRelay
+    Controller -->|"ch 687686 (options)"| LinkAssign
+    RegBooth -->|"ch -8787 (signup)"| Controller
 ```
 
 Three services work together:
@@ -207,12 +221,33 @@ node traversal session. Reads two notecards from its inventory:
   responses. See AriadneXMLConfig.txt for a sample.
 
 When touched, the controller:
-1. Generates a session ID (MD5 of timestamp + owner key)
-2. Requests node 1 from the Ariadne4j API
-3. Parses the XML response for assets and question options
-4. Dispatches assets to the bracelet (channel 603) and media relay
-   (channel -63342)
-5. Displays question options via MOAP on face 0 using show.html
+
+```mermaid
+sequenceDiagram
+    participant Avatar
+    participant Controller as Controller Prim
+    participant API as Ariadne4j API
+    participant Mongo as MongoDB
+    participant Bracelet as Bracelet (ch 603)
+    participant Media as Media Relay (ch -63342)
+
+    Avatar->>Controller: Touch
+    Controller->>Controller: Generate session ID (MD5)
+    Controller->>API: GET /api/node/1?sessionId=<id>
+    API->>Mongo: Query nodes + assets
+    Mongo-->>API: Node data + assets
+    API-->>Controller: XML response (title, content, questions, assets)
+    Controller->>Controller: Parse XML, extract assets
+    Controller->>Bracelet: ch 603: avatar~SLAnimation~name~value
+    Bracelet->>Avatar: osAvatarPlayAnimation()
+    Controller->>Media: ch -63342: media URL
+    Media->>Media: llParcelMediaCommandList()
+    Controller->>Controller: Set MOAP face 0 (show.html?doptions=...)
+    Avatar->>Controller: Click option button
+    Controller->>API: GET /api/node/<next>?sessionId=<id>
+    API-->>Controller: Next node XML
+    Note over Controller,Bracelet: Repeat asset dispatch for each node
+```
 
 ### bracelet.lsl
 
