@@ -31,7 +31,7 @@ default
             llDialog(currentSignupUserKey, "Sign-up?", buttons, button_channel);
         }else{
              llSay(0, "key: "+(string)currentSignupUserKey );
-            Rq_register = llHTTPRequest("http://142.51.75.11/ariadne4j/Users?action=register&aKey=" + (string)currentSignupUserKey + "&av="
+            Rq_register = llHTTPRequest("http://127.0.0.1:8080/ariadne/Users?action=register&aKey=" + (string)currentSignupUserKey + "&av="
             +llEscapeURL(llKey2Name(currentSignupUserKey)), [HTTP_METHOD,"POST"], "");
         }
     }
@@ -60,7 +60,7 @@ default
     listen(integer channel, string name, key id, string msg) {
 
         if (channel == button_channel){ // buttons from llDialog
-            Rq_signup = llHTTPRequest("http://142.51.75.11/ariadne4j/Users?api=" + msg+"&av="+llEscapeURL(llKey2Name(currentSignupUserKey)), [HTTP_METHOD,"POST"], "");
+            Rq_signup = llHTTPRequest("http://127.0.0.1:8080/ariadne/Users?api=" + msg+"&av="+llEscapeURL(llKey2Name(currentSignupUserKey)), [HTTP_METHOD,"POST"], "");
         }
 
         if (channel == gSignupObjChannel){

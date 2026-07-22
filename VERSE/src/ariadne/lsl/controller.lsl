@@ -76,6 +76,8 @@ integer gSignupObjChannel = -8787;
 
 integer gPIVOTEChannel = 687686; // different for each master within 20m - MUST CHANGE ALL OBJECTS
 integer gMediaCh = -63342;
+integer gMediaFace = 0;
+integer gMediaLink = LINK_THIS;
 //integer gFauxIMChannel = -696969; // never gets used as channel, just a mask
 
 integer gPlayerTrackingObjChannel = 603; // bracelet
@@ -497,18 +499,146 @@ parseFeed(string body){
    // llSay(0, "in assetValues " + llList2CSV(assetValues));
    // llSay(0, "in assetTargets " + llList2CSV(assetTargets));
    // llSay(0, "in assetNames " + llList2CSV(assetNames));
-}
+ }
 
-sendChatCommand (integer channel, string cmd) {
-    if (channel == -11674){
-        llInstantMessage(llList2String(llParseString2List(cmd, ["~"], []), 0), llList2String(llParseString2List(cmd, ["~"], []), 1));
-    }else{
-        if (channel == gPIVOTEChannel && gPIVOTEPrefix != ""){
-            cmd = gPIVOTEPrefix+":"+ cmd;
-        }
-    }
-    llSay(channel, cmd);
-}
+ setSharedMediaUrl(string url) {
+     llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): link=" + (string)gMediaLink + ", face=" + (string)gMediaFace + ", url=" + url);
+     if (url == "") {
+         llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): abort (empty url)");
+         return;
+     }
+     if (llSubStringIndex(url, "http") != 0) {
+         llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): abort (url does not start with http)");
+         return;
+     }
+     list mediaParams = [
+         PRIM_MEDIA_CURRENT_URL, url,
+         PRIM_MEDIA_HOME_URL, url,
+         PRIM_MEDIA_AUTO_PLAY, TRUE,
+         PRIM_MEDIA_AUTO_SCALE, TRUE,
+         PRIM_MEDIA_WIDTH_PIXELS, 1024,
+         PRIM_MEDIA_HEIGHT_PIXELS, 768,
+         PRIM_MEDIA_PERMS_INTERACT, PRIM_MEDIA_PERM_ANYONE,
+         PRIM_MEDIA_PERMS_CONTROL, PRIM_MEDIA_PERM_ANYONE
+     ];
+
+     integer linkCount = llGetNumberOfPrims();
+     integer faceStart = gMediaFace;
+     integer faceEnd = gMediaFace;
+     if (gMediaFace == -1) {
+         faceStart = 0;
+         faceEnd = 7;
+         llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): face sweep enabled (gMediaFace=-1)");
+     }
+ 
+     if (gMediaLink == -1) {
+         llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): broadcast mode enabled (gMediaLink=-1)");
+         integer link;
+         integer face;
+         for (link = 1; link <= linkCount; link++) {
+             for (face = 0; face <= 7; face++) {
+                 integer ok = llSetLinkMedia(link, face, mediaParams);
+                 if (ok) {
+                     // keep quiet on success
+                 }
+             }
+         }
+         llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): broadcast mode done (links=" + (string)linkCount + ")");
+         return;
+     }
+ 
+     integer face;
+     integer usePrimMedia = FALSE;
+     if (gMediaLink == LINK_THIS) {
+         usePrimMedia = TRUE;
+     }
+     if (gMediaLink == LINK_ROOT) {
+         usePrimMedia = TRUE;
+     }
+     if (linkCount <= 1 && gMediaLink == 1) {
+         usePrimMedia = TRUE;
+     }
+
+     for (face = faceStart; face <= faceEnd; face++) {
+         if (usePrimMedia) {
+             llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): calling llSetPrimMediaParams() face=" + (string)face);
+             integer okPrim = llSetPrimMediaParams(face, mediaParams);
+             llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): llSetPrimMediaParams return=" + (string)okPrim);
+         } else {
+             llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): calling llSetLinkMedia() link=" + (string)gMediaLink + ", face=" + (string)face);
+             integer okLink = llSetLinkMedia(gMediaLink, face, mediaParams);
+             llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): llSetLinkMedia return=" + (string)okLink);
+         }
+     }
+     llSay(0, "[CONTROLLER DEBUG] setSharedMediaUrl(): done");
+ }
+
+ string extractXmlTagValue(string body, string tag) {
+     string openTag = "<" + tag + ">";
+     string closeTag = "</" + tag + ">";
+     integer start = llSubStringIndex(body, openTag);
+     if (start == -1) {
+         return "";
+     }
+     start += llStringLength(openTag);
+     integer endRel = llSubStringIndex(llGetSubString(body, start, -1), closeTag);
+     if (endRel == -1) {
+         return "";
+     }
+     integer end = start + endRel - 1;
+     return llStringTrim(llGetSubString(body, start, end), STRING_TRIM);
+ }
+
+ list extractXmlOptionValues(string body) {
+     list opts = [];
+     integer pos = 0;
+     while (TRUE) {
+         integer rel = llSubStringIndex(llGetSubString(body, pos, -1), "<option ");
+         if (rel == -1) {
+             rel = llSubStringIndex(llGetSubString(body, pos, -1), "<option>");
+         }
+         if (rel == -1) {
+             jump out;
+         }
+         integer start = pos + rel;
+         integer gtRel = llSubStringIndex(llGetSubString(body, start, -1), ">");
+         if (gtRel == -1) {
+             jump out;
+         }
+         integer gt = start + gtRel;
+         integer endRel = llSubStringIndex(llGetSubString(body, gt + 1, -1), "</option>");
+         if (endRel == -1) {
+             jump out;
+         }
+         integer end = gt + 1 + endRel - 1;
+         string opt = llStringTrim(llGetSubString(body, gt + 1, end), STRING_TRIM);
+         if (opt != "") {
+             opts += [opt];
+         }
+         pos = end + 10;
+     }
+     @out;
+     return opts;
+ }
+
+ sendChatCommand (integer channel, string cmd) {
+     if (channel == -11674){
+         llInstantMessage(llList2String(llParseString2List(cmd, ["~"], []), 0), llList2String(llParseString2List(cmd, ["~"], []), 1));
+     }else{
+         if (channel == gPIVOTEChannel && gPIVOTEPrefix != ""){
+             cmd = gPIVOTEPrefix+":"+ cmd;
+         }
+     }
+     if (channel == gMediaCh) {
+         llSay(0, "[CONTROLLER DEBUG] sendChatCommand(): gMediaCh message=" + cmd);
+         if (llSubStringIndex(cmd, "~showbrowser") == -1) {
+             setSharedMediaUrl(cmd);
+         } else {
+             llSay(0, "[CONTROLLER DEBUG] sendChatCommand(): skipping shared-media update (showbrowser command)");
+         }
+     }
+     llSay(channel, cmd);
+ }
 
 parserConfig_load(string p, string v) {
     if (p == "xmllabel.RootNode") {
@@ -615,6 +745,11 @@ config_load(string p, string v) {
         gUpdatingURL = v;
         jump out;
     }
+    if (p == "gQSParserPageURL") {
+        gQSParserPageURL = v;
+        llSay(0, "[CONTROLLER DEBUG] Config: gQSParserPageURL=" + gQSParserPageURL);
+        jump out;
+    }
     if (p == "gFilter") {
         gFilter = llEscapeURL(v);
         jump out;
@@ -633,6 +768,17 @@ config_load(string p, string v) {
     }
     if (p == "gMediaCh") {
         gMediaCh = (integer)v;
+        llSay(0, "[CONTROLLER DEBUG] Config: gMediaCh=" + (string)gMediaCh);
+        jump out;
+    }
+    if (p == "gMediaFace") {
+        gMediaFace = (integer)v;
+        llSay(0, "[CONTROLLER DEBUG] Config: gMediaFace=" + (string)gMediaFace);
+        jump out;
+    }
+    if (p == "gMediaLink") {
+        gMediaLink = (integer)v;
+        llSay(0, "[CONTROLLER DEBUG] Config: gMediaLink=" + (string)gMediaLink);
         jump out;
     }
     if (p == "gQuickStart") {
@@ -710,6 +856,8 @@ option_start(key id) {
 }
 
 option_text() {
+    llSay(0, "[CONTROLLER DEBUG] option_text(): localtext_len=" + (string)llStringLength(localtext));
+    llSay(0, "[CONTROLLER DEBUG] option_text(): gOptions_len=" + (string)llGetListLength(gOptions) + ", gOptions=" + llList2CSV(gOptions));
     sendChatCommand(gMediaCh, gQSParserPageURL + "?dtext="
     + llGetSubString(llEscapeURL(localtext), 0, 66)+"&doptions=" /// **** truncating text to display in opensim/SL
     + llEscapeURL(llList2CSV(gOptions))); // page with doc.write() JS, presents QS params
@@ -1105,6 +1253,16 @@ state active
         parseAssets(body);
         parseFeed(body);
 
+        if (localtext == "") {
+            string contentText = extractXmlTagValue(body, "content");
+            if (contentText != "") {
+                localtext = contentText;
+                llSay(0, "[CONTROLLER DEBUG] extracted <content>: " + llGetSubString(localtext, 0, 120));
+            } else {
+                llSay(0, "[CONTROLLER DEBUG] extracted <content>: (empty)");
+            }
+        }
+
         gPage = "node";
         gNodeMedia = "";
         gNodeImage = "";
@@ -1149,6 +1307,7 @@ state active
                    // llSay(0, "detex: "+dtext);
                     //localtext = localtext + dtext + ". ";
                     localtext = dtext;
+                    llSay(0, "[CONTROLLER DEBUG] parseFeed(): localtext set to: " + llGetSubString(localtext, 0, 120));
                 } else {
                     // assume at beginning
                     sendChatCommand(gPIVOTEChannel, "<device>"+device+"</device>"+dtext);
@@ -1195,7 +1354,13 @@ state active
 
         }
         set_button("options", "show");
-        gOptions = linkLabels;
+        if (llGetListLength(linkLabels) > 0) {
+            gOptions = linkLabels;
+        } else {
+            gOptions = extractXmlOptionValues(body);
+        }
+        llSay(0, "[CONTROLLER DEBUG] post-parse: linkLabels_len=" + (string)llGetListLength(linkLabels) + ", linkLabels=" + llList2CSV(linkLabels));
+        llSay(0, "[CONTROLLER DEBUG] post-parse: gOptions_len=" + (string)llGetListLength(gOptions) + ", gOptions=" + llList2CSV(gOptions));
 
         option_text();
 

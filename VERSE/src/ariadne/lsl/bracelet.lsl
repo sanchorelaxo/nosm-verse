@@ -1,239 +1,159 @@
-float pulse = 0.1;//the time between each check, adjust it to your liking
-//bigger == slower == low resources
-
-//if a state isnt in the list its just ignored, you can add new overriding states here
-list states = [];
-
-//list of ther anims yo will use instead if the value == pass on, we let the anim play. One anim per state
-list anims = [];
-
-string anim_overrided= "";
-string curr_anim= "";
+// Ariadne Bracelet Script - OpenSimulator Edition
+// Uses osAvatarPlayAnimation for reliable animation playback (no permission needed)
+// Requires OSSL functions enabled in OpenSim.ini
 
 float gSensorRange = 196.0;
 float gSoundVolume = 0.8;
 
-assignSL(string type, string name, string val){
+// Current animation tracking
+string curr_anim = "";
 
-list valOpts = llParseString2List(val,["|"],[]);
+assignSL(string type, string name, string val) {
+    list valOpts = llParseString2List(val, ["|"], []);
+    key owner = llGetOwner();
 
-
-    if (type == "SLAnimation"){
-        //val format: animation_name|duration|isLoop|loopCount|loopCtrls
+    if (type == "SLAnimation") {
         // Extract the animation name (first part before |)
         string animName = llList2String(valOpts, 0);
-
         llSay(0, "[BRACELET DEBUG] SLAnimation: name=" + name + ", animName=" + animName);
-
-        integer foundstate = 0;
-        integer n = llGetListLength(valOpts);
-        integer i;
-        for(i = 0; i < n; i++){
-          if (i==4) { // any ctrls defined (index 4 in valOpts)
-            list ctrl_val_list = llParseString2List(llList2String(valOpts, i),[","],[]);
-            integer ll = llGetListLength(ctrl_val_list);
-            integer j;
-            for(j = 0; j < ll; j++){
-                string curVal = llList2String(ctrl_val_list, j);
-                if(llListFindList(ctrl_val_list,[curVal]) != -1){
-                    // must add both, as array position must match... i think.
-                    foundstate = 1;
-                    anims += animName;
-                    states += curVal;
-                }
-            }
-          }
+        
+        // Stop current animation if playing
+        if (curr_anim != "") {
+            llSay(0, "[BRACELET DEBUG] Stopping previous animation: " + curr_anim);
+            osAvatarStopAnimation(owner, curr_anim);
         }
-        if (foundstate == 0){ // auto assign to default if no ctrls defined
-            anims += animName;
-            states += "Standing";
-        }
-        llSay(0, "[BRACELET DEBUG] Animation queued: " + animName + ", state: Standing");
-        llRequestPermissions(llGetOwner(),PERMISSION_TRIGGER_ANIMATION);//we ask for permissions
+        
+        // Play new animation using OSSL function (no permission needed!)
+        llSay(0, "[BRACELET DEBUG] Playing animation via osAvatarPlayAnimation: " + animName);
+        osAvatarPlayAnimation(owner, animName);
+        curr_anim = animName;
         jump out;
     }
 
-    if (type == "SLBodypart"){
-            llGiveInventory(llGetOwner(), name);
-            llInstantMessage(llGetOwner(), name + " has been added to your inventory. "
-                +"Drag it to appropriate area on your avatar to wear it. ");
+    if (type == "SLBodypart") {
+        llGiveInventory(owner, name);
+        llInstantMessage(owner, name + " has been added to your inventory. "
+            + "Drag it to appropriate area on your avatar to wear it.");
         jump out;
     }
 
-    if (type == "SLSound"){
-        // llTriggerSound(name,gSoundVolume);
-        // if duration > sound length
-        //llLoopSound(name,gSoundVolume);
+    if (type == "SLSound") {
         llSetSoundQueueing(TRUE);
-            //}
-
-// TODO: bind to user controls
         llSetSoundRadius(gSensorRange);
-        llTriggerSound(name, gSoundVolume);
-        jump out;
-
-    }
-
-    if (type == "SLObject"){
-            llGiveInventory(llGetOwner(),name);
-            llInstantMessage(llGetOwner(), name + " has been added to your inventory. "
-                +"Drag it to the ground to rez it");
-        //llAttachToAvatar(integer);
+        // val contains the sound UUID
+        llSay(0, "[BRACELET DEBUG] Playing sound: " + name + " (UUID: " + val + ")");
+        llTriggerSound(val, gSoundVolume);
         jump out;
     }
 
-    if (type == "SLHud"){
-            llGiveInventory(llGetOwner(), "hud "+name);
-            llInstantMessage(llGetOwner(), "The "+ name +" HUD has been added to your inventory. "
-                +"Please attach it to the " + val + "of your display.");
+    if (type == "SLObject") {
+        llGiveInventory(owner, name);
+        llInstantMessage(owner, name + " has been added to your inventory. "
+            + "Drag it to the ground to rez it");
         jump out;
     }
-    if (type == "SLPackage"){
-            llGiveInventory(llGetOwner(), "crate "+name);
-            llInstantMessage(llGetOwner(), "The " +name + " crate has been added to your inventory. "
-                +"Drag it to the ground to rez it, and right-click to open it.");
-        jump out;
-    }
-    if (type == "SLAction"){
-        vector dest = (vector)("<"+llList2String(llParseString2List(val,["|"],[]),1)+">");
-        do
-        {
-            llPushObject(llGetOwner(),(dest-llGetPos())*(llVecDist(llGetPos(),dest)),ZERO_VECTOR,FALSE); //Pushes the avatar to the position.
-            llMoveToTarget(dest,0.05); //If your agent gets close to the avatar it will direct the path.
-        }
-        while(llVecDist(dest,llGetPos()) > 40.0);
 
-        llMoveToTarget(dest,0.05);
-        llSleep(0.25); //Prevents you from flying.
+    if (type == "SLHud") {
+        llGiveInventory(owner, "hud " + name);
+        llInstantMessage(owner, "The " + name + " HUD has been added to your inventory. "
+            + "Please attach it to the " + val + " of your display.");
+        jump out;
+    }
+
+    if (type == "SLPackage") {
+        llGiveInventory(owner, "crate " + name);
+        llInstantMessage(owner, "The " + name + " crate has been added to your inventory. "
+            + "Drag it to the ground to rez it, and right-click to open it.");
+        jump out;
+    }
+
+    if (type == "SLAction") {
+        vector dest = (vector)("<" + llList2String(llParseString2List(val, ["|"], []), 1) + ">");
+        do {
+            llPushObject(owner, (dest - llGetPos()) * (llVecDist(llGetPos(), dest)), ZERO_VECTOR, FALSE);
+            llMoveToTarget(dest, 0.05);
+        } while (llVecDist(dest, llGetPos()) > 40.0);
+        llMoveToTarget(dest, 0.05);
+        llSleep(0.25);
         llStopMoveToTarget();
         jump out;
     }
-    if (type == "SLParticleSystem"){
-       // llSay(0, "Particler sys str: :" +llDumpList2String(valOpts, ","));
-        // if start run:
-       // Particle_viewer_area_edition(valOpts);
-       // if stop, run:
-       // llParticleSystem ([]);
+
+    if (type == "SLParticleSystem") {
+        // Particle system handling - placeholder
         jump out;
     }
 
-    if (type == "SLLandmark"){
-        llGiveInventory(llGetOwner(), name);
-        llInstantMessage(llGetOwner(), "The " +name + " landmark has been added to your inventory.");
+    if (type == "SLLandmark") {
+        llGiveInventory(owner, name);
+        llInstantMessage(owner, "The " + name + " landmark has been added to your inventory.");
         jump out;
     }
 
-    if (type == "SLTexture"){
-        llGiveInventory(llGetOwner(), name);
-        llInstantMessage(llGetOwner(), "The " +name + " texture has been added to your inventory.");
+    if (type == "SLTexture") {
+        llGiveInventory(owner, name);
+        llInstantMessage(owner, "The " + name + " texture has been added to your inventory.");
         jump out;
     }
 
-    if (type == "SLClothing"){
-        llGiveInventory(llGetOwner(), name);
-       llInstantMessage(llGetOwner(), "The " +name + " apparel item has been added to your inventory.");
+    if (type == "SLClothing") {
+        llGiveInventory(owner, name);
+        llInstantMessage(owner, "The " + name + " apparel item has been added to your inventory.");
+        jump out;
     }
-     llResetScript();
+
     @out;
 }
 
-
-
-default
-{
+default {
     attach(key id) {
-        if(id == NULL_KEY && curr_anim != "")//IF detached and an animation is running
-            llStopAnimation(curr_anim);
-        else
+        if (id == NULL_KEY && curr_anim != "") {
+            // Detached - stop any running animation
+            osAvatarStopAnimation(llGetOwner(), curr_anim);
+            curr_anim = "";
+        } else if (id != NULL_KEY) {
             llResetScript();
-    }
-    state_entry(){
-     llListen(603, "", NULL_KEY, "" );
-     llListen(0, "", llGetOwner(), "" );
-    }
-
-    run_time_permissions(integer perms){
-        if (perms & PERMISSION_TRIGGER_ANIMATION) {
-            llSay(0, "[BRACELET DEBUG] Animation permission granted");
-            // Start any queued animation immediately
-            if (llGetListLength(anims) > 0) {
-                string animToPlay = llList2String(anims, 0);
-                llSay(0, "[BRACELET DEBUG] Playing queued animation: " + animToPlay);
-                llStartAnimation(animToPlay);
-                curr_anim = animToPlay;
-            }
-            llSetTimerEvent(pulse);
         }
     }
 
-    timer(){
-        string anim_state = llGetAnimation(llGetPermissionsKey());
-        if(anim_state == "Turning Left" || anim_state == "Turning Right")//this is a little HACK to remove the turn left and right
-            anim_state = "Standing";
-        integer anim_index = llListFindList(states,[anim_state]);
-        if((anim_index != -1) && (anim_overrided != anim_state))//IF we havent specified this anim must be ignored
-        {
-            anim_overrided = anim_state;
-            //llSetText("",<1,1,1>,1.0);//DEBUG displaying the state
-            if(llList2String(anims,anim_index) == "PASS_ON")
-            {
-                if(curr_anim != "")
-                    llStopAnimation(curr_anim);
-                curr_anim = "";
-            } else {
-                string stop_anim = curr_anim;
-                curr_anim = llList2String(anims,anim_index);
-                if(stop_anim != "")
-                    llStopAnimation(stop_anim);
-
-                if(curr_anim != stop_anim) { //if its the same anim we already play no need to change it
-                    llSay(0, "[BRACELET DEBUG] Starting animation: " + curr_anim);
-                    llStartAnimation(curr_anim);
-                }
-
-                if(anim_state == "Walking")//another lil hack so the av turn itself 180 when walking backward
-                    llStopAnimation("walk");//comment these 2 lines if you have a real backward animation
-            }
-        }
+    state_entry() {
+        llSay(0, "[BRACELET DEBUG] Bracelet initialized (OpenSimulator OSSL version)");
+        llListen(603, "", NULL_KEY, "");  // Asset delivery channel
+        llListen(0, "", llGetOwner(), ""); // Owner chat for commands
     }
 
-     listen (integer ch, string s, key k, string msg) {
-        if (ch == 603){
-            if( llSubStringIndex(msg, "~") > -1){
-                llSay(0, "bracelet heard ya: "+ msg);
+    listen(integer ch, string name, key id, string msg) {
+        if (ch == 603) {
+            if (llSubStringIndex(msg, "~") > -1) {
+                llSay(0, "[BRACELET DEBUG] Received on ch 603: " + msg);
                 list parts = llParseString2List(msg, ["~"], []);
                 string iKey = llList2String(parts, 0);
-                string itype =  llList2String(parts, 1);
+                string itype = llList2String(parts, 1);
                 string iname = llList2String(parts, 2);
                 string ival = llList2String(parts, 3);
-                llSay(0, msg);
-                if ( (string)llGetOwner() == iKey || iKey == llKey2Name(llGetOwner()) || iKey == "avatar" ){
-                    llSay(0,"ya?");
+                
+                // Check if this message is for us (owner or "avatar" target)
+                if ((string)llGetOwner() == iKey || iKey == llKey2Name(llGetOwner()) || iKey == "avatar") {
+                    llSay(0, "[BRACELET DEBUG] Processing asset: type=" + itype + ", name=" + iname);
                     assignSL(itype, iname, ival);
-                }else{
-                   //  llSay(0, "Doesn't apply to me: "+ iKey);
                 }
-            }else{
-                if( llSubStringIndex(msg, "reset") > -1){
-                    llSay(0, "resetting");
-                   // llSetTimerEvent(0.0);
-                    //llStopAnimation(curr_anim);
-                    //curr_anim = "";
-                    // states = [];
-                    // anims = [];
-                   llResetScript();
-                   // llListen( -1, "", NULL_KEY, "" );
-                    //llListen(0, "", llGetOwner(), "" );
-                   llSleep(1);
+            } else if (llSubStringIndex(msg, "reset") > -1) {
+                llSay(0, "[BRACELET DEBUG] Reset command received");
+                if (curr_anim != "") {
+                    osAvatarStopAnimation(llGetOwner(), curr_anim);
+                    curr_anim = "";
                 }
+                llResetScript();
             }
         }
-        if (ch == 0){
-            if( llSubStringIndex(msg, "chose:") == 0){
+        
+        if (ch == 0) {
+            // Handle owner chat commands (e.g., "chose:XX")
+            if (llSubStringIndex(msg, "chose:") == 0) {
                 string thisOpt = llGetSubString(msg, 6, 7);
                 llSay(0, thisOpt);
                 llSay(687686, "option=" + thisOpt);
             }
         }
     }
-} // END //
+}
